@@ -2,26 +2,41 @@ require('./sourcemap-register.js');module.exports =
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 932:
-/***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
+/***/ 2932:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-const core = __webpack_require__(186);
-const split = __webpack_require__(907);
+/* module decorator */ module = __webpack_require__.nmd(module);
+const core = __webpack_require__(2186);
+const split = __webpack_require__(5907).split;
+const splitWithTiming = __webpack_require__(5907).splitWithTiming;
+const path = __webpack_require__(5622);
 
 // most @actions toolkit packages have async methods
 async function run() {
   try {
-    const module = core.getInput("module", true).trim();
+    const testPath = path.resolve(core.getInput("test-path", true));
     const nodeIndex = parseInt(core.getInput("node-index", true));
     const nodeTotal = parseInt(core.getInput("node-total", true));
-    const ignore = getInputAsArray("exclude");
+    const testResultPath = path.resolve(core.getInput("test-result-path"));
+    const testExclude = getInputAsArray("test-exclude");
 
     core.info(
-      `Creating ${module} tests for index ${nodeIndex} of total ${nodeTotal} with files to ignore: ${ignore}`
+      `Creating ${module} tests for index ${nodeIndex} of total ${nodeTotal} with files to ignore: ${testExclude}`
     );
 
-    const tests = await split(module, nodeIndex, nodeTotal, ignore);
-    core.info(`Successfully created tests: ${tests}`);
+    var tests = "";
+    if (testResultPath == null || testResultPath === "") {
+      tests = await split(testPath, nodeIndex, nodeTotal, testExclude);
+    } else {
+      tests = await splitWithTiming(
+        testPath,
+        testResultPath,
+        nodeIndex,
+        nodeTotal,
+        testExclude
+      );
+    }
+
     core.setOutput("tests", tests);
   } catch (error) {
     core.setFailed(error.message);
@@ -41,7 +56,7 @@ run();
 
 /***/ }),
 
-/***/ 351:
+/***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -54,8 +69,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const os = __importStar(__webpack_require__(87));
-const utils_1 = __webpack_require__(278);
+const os = __importStar(__webpack_require__(2087));
+const utils_1 = __webpack_require__(5278);
 /**
  * Commands
  *
@@ -127,7 +142,7 @@ function escapeProperty(s) {
 
 /***/ }),
 
-/***/ 186:
+/***/ 2186:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -149,11 +164,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const command_1 = __webpack_require__(351);
+const command_1 = __webpack_require__(7351);
 const file_command_1 = __webpack_require__(717);
-const utils_1 = __webpack_require__(278);
-const os = __importStar(__webpack_require__(87));
-const path = __importStar(__webpack_require__(622));
+const utils_1 = __webpack_require__(5278);
+const os = __importStar(__webpack_require__(2087));
+const path = __importStar(__webpack_require__(5622));
 /**
  * The code to exit an action
  */
@@ -388,9 +403,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const fs = __importStar(__webpack_require__(747));
-const os = __importStar(__webpack_require__(87));
-const utils_1 = __webpack_require__(278);
+const fs = __importStar(__webpack_require__(5747));
+const os = __importStar(__webpack_require__(2087));
+const utils_1 = __webpack_require__(5278);
 function issueCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
     if (!filePath) {
@@ -408,7 +423,7 @@ exports.issueCommand = issueCommand;
 
 /***/ }),
 
-/***/ 278:
+/***/ 5278:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -434,7 +449,7 @@ exports.toCommandValue = toCommandValue;
 
 /***/ }),
 
-/***/ 417:
+/***/ 9417:
 /***/ ((module) => {
 
 "use strict";
@@ -501,11 +516,11 @@ function range(a, b, str) {
 
 /***/ }),
 
-/***/ 850:
+/***/ 3717:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var concatMap = __webpack_require__(891);
-var balanced = __webpack_require__(417);
+var concatMap = __webpack_require__(6891);
+var balanced = __webpack_require__(9417);
 
 module.exports = expandTop;
 
@@ -709,7 +724,4705 @@ function expand(str, isTop) {
 
 /***/ }),
 
-/***/ 891:
+/***/ 3171:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+var Shim = __webpack_require__(9179);
+var GenericCollection = __webpack_require__(8488);
+var GenericMap = __webpack_require__(2049);
+
+// Burgled from https://github.com/domenic/dict
+
+module.exports = Dict;
+function Dict(values, getDefault) {
+    if (!(this instanceof Dict)) {
+        return new Dict(values, getDefault);
+    }
+    getDefault = getDefault || Function.noop;
+    this.getDefault = getDefault;
+    this.store = Object.create(null);
+    this.length = 0;
+    this.addEach(values);
+}
+
+Dict.Dict = Dict; // hack so require("dict").Dict will work in MontageJS.
+
+Object.addEach(Dict.prototype, GenericCollection.prototype);
+Object.addEach(Dict.prototype, GenericMap.prototype);
+
+Dict.from = GenericCollection.from;
+
+Dict.prototype.constructClone = function (values) {
+    return new this.constructor(values, this.getDefault);
+};
+
+Dict.prototype.assertString = function (key) {
+    if (typeof key !== "string") {
+        throw new TypeError("key must be a string but Got " + key);
+    }
+}
+
+Object.defineProperty(Dict.prototype,"$__proto__",{writable:true});
+Object.defineProperty(Dict.prototype,"_hasProto",{
+    get:function() {
+        return this.hasOwnProperty("$__proto__") && typeof this._protoValue !== "undefined";
+    }
+});
+Object.defineProperty(Dict.prototype,"_protoValue",{
+    get:function() {
+        return this["$__proto__"];
+    },
+    set: function(value) {
+        this["$__proto__"] = value;
+    }
+});
+
+Object.defineProperty(Dict.prototype,"size",GenericCollection._sizePropertyDescriptor);
+
+
+Dict.prototype.get = function (key, defaultValue) {
+    this.assertString(key);
+    if (key === "__proto__") {
+        if (this._hasProto) {
+            return this._protoValue;
+        } else if (arguments.length > 1) {
+            return defaultValue;
+        } else {
+            return this.getDefault(key);
+        }
+    }
+    else {
+        if (key in this.store) {
+            return this.store[key];
+        } else if (arguments.length > 1) {
+            return defaultValue;
+        } else {
+            return this.getDefault(key);
+        }
+    }
+};
+
+Dict.prototype.set = function (key, value) {
+    this.assertString(key);
+    var isProtoKey = (key === "__proto__");
+
+    if (isProtoKey ? this._hasProto : key in this.store) { // update
+        if (this.dispatchesMapChanges) {
+            this.dispatchBeforeMapChange(key, isProtoKey ? this._protoValue : this.store[key]);
+        }
+
+        isProtoKey
+            ? this._protoValue = value
+            : this.store[key] = value;
+
+        if (this.dispatchesMapChanges) {
+            this.dispatchMapChange(key, value);
+        }
+        return false;
+    } else { // create
+        if (this.dispatchesMapChanges) {
+            this.dispatchBeforeMapChange(key, undefined);
+        }
+        this.length++;
+
+        isProtoKey
+            ? this._protoValue = value
+            : this.store[key] = value;
+
+        if (this.dispatchesMapChanges) {
+            this.dispatchMapChange(key, value);
+        }
+        return true;
+    }
+};
+
+Dict.prototype.has = function (key) {
+    this.assertString(key);
+    return key === "__proto__" ? this._hasProto : key in this.store;
+};
+
+Dict.prototype["delete"] = function (key) {
+    this.assertString(key);
+    if (key === "__proto__") {
+        if (this._hasProto) {
+            if (this.dispatchesMapChanges) {
+                this.dispatchBeforeMapChange(key, this._protoValue);
+            }
+            this._protoValue = undefined;
+            this.length--;
+            if (this.dispatchesMapChanges) {
+                this.dispatchMapChange(key, undefined);
+            }
+            return true;
+        }
+        return false;
+    }
+    else {
+        if (key in this.store) {
+            if (this.dispatchesMapChanges) {
+                this.dispatchBeforeMapChange(key, this.store[key]);
+            }
+            delete this.store[key];
+            this.length--;
+            if (this.dispatchesMapChanges) {
+                this.dispatchMapChange(key, undefined);
+            }
+            return true;
+        }
+        return false;
+    }
+};
+
+Dict.prototype.clear = function () {
+    var key;
+    if (this._hasProto) {
+        if (this.dispatchesMapChanges) {
+            this.dispatchBeforeMapChange("__proto__", this._protoValue);
+        }
+        this._protoValue = undefined;
+        if (this.dispatchesMapChanges) {
+            this.dispatchMapChange("__proto__", undefined);
+        }
+    }
+    for (key in this.store) {
+        if (this.dispatchesMapChanges) {
+            this.dispatchBeforeMapChange(key, this.store[key]);
+        }
+        delete this.store[key];
+        if (this.dispatchesMapChanges) {
+            this.dispatchMapChange(key, undefined);
+        }
+    }
+    this.length = 0;
+};
+
+Dict.prototype.reduce = function (callback, basis, thisp) {
+    if(this._hasProto) {
+        basis = callback.call(thisp, basis, "$__proto__", "__proto__", this);
+    }
+    var store = this.store;
+    for (var key in this.store) {
+        basis = callback.call(thisp, basis, store[key], key, this);
+    }
+    return basis;
+};
+
+Dict.prototype.reduceRight = function (callback, basis, thisp) {
+    var self = this;
+    var store = this.store;
+    basis = Object.keys(this.store).reduceRight(function (basis, key) {
+        return callback.call(thisp, basis, store[key], key, self);
+    }, basis);
+
+    if(this._hasProto) {
+        return callback.call(thisp, basis, this._protoValue, "__proto__", self);
+    }
+    return basis;
+};
+
+Dict.prototype.one = function () {
+    var key;
+    for (key in this.store) {
+        return this.store[key];
+    }
+    return this._protoValue;
+};
+
+Dict.prototype.toJSON = function () {
+    return this.toObject();
+};
+
+
+/***/ }),
+
+/***/ 7307:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+var Shim = __webpack_require__(9179);
+var Dict = __webpack_require__(3171);
+var List = __webpack_require__(3135);
+var GenericCollection = __webpack_require__(8488);
+var GenericSet = __webpack_require__(9918);
+var TreeLog = __webpack_require__(1783);
+
+var object_has = Object.prototype.hasOwnProperty;
+
+module.exports = FastSet;
+
+function FastSet(values, equals, hash, getDefault) {
+    if (!(this instanceof FastSet)) {
+        return new FastSet(values, equals, hash, getDefault);
+    }
+    equals = equals || Object.equals;
+    hash = hash || Object.hash;
+    getDefault = getDefault || Function.noop;
+    this.contentEquals = equals;
+    this.contentHash = hash;
+    this.getDefault = getDefault;
+    var self = this;
+    this.buckets = new this.Buckets(null, function getDefaultBucket() {
+        return new self.Bucket();
+    });
+    this.length = 0;
+    this.addEach(values);
+}
+
+FastSet.FastSet = FastSet; // hack so require("fast-set").FastSet will work in MontageJS
+
+Object.addEach(FastSet.prototype, GenericCollection.prototype);
+Object.addEach(FastSet.prototype, GenericSet.prototype);
+FastSet.from = GenericCollection.from;
+
+FastSet.prototype.Buckets = Dict;
+FastSet.prototype.Bucket = List;
+
+FastSet.prototype.constructClone = function (values) {
+    return new this.constructor(
+        values,
+        this.contentEquals,
+        this.contentHash,
+        this.getDefault
+    );
+};
+
+FastSet.prototype.has = function (value) {
+    var hash = this.contentHash(value);
+    return this.buckets.get(hash).has(value);
+};
+
+FastSet.prototype.get = function (value, equals) {
+    if (equals) {
+        throw new Error("FastSet#get does not support second argument: equals");
+    }
+    var hash = this.contentHash(value);
+    var buckets = this.buckets;
+    if (buckets.has(hash)) {
+        return buckets.get(hash).get(value);
+    } else {
+        return this.getDefault(value);
+    }
+};
+
+FastSet.prototype["delete"] = function (value, equals) {
+    if (equals) {
+        throw new Error("FastSet#delete does not support second argument: equals");
+    }
+    var hash = this.contentHash(value);
+    var buckets = this.buckets;
+    if (buckets.has(hash)) {
+        var bucket = buckets.get(hash);
+        if (bucket["delete"](value)) {
+            this.length--;
+            if (bucket.length === 0) {
+                buckets["delete"](hash);
+            }
+            return true;
+        }
+    }
+    return false;
+};
+
+FastSet.prototype.clear = function () {
+    this.buckets.clear();
+    this.length = 0;
+};
+
+FastSet.prototype.add = function (value) {
+    var hash = this.contentHash(value);
+    var buckets = this.buckets;
+    if (!buckets.has(hash)) {
+        buckets.set(hash, new this.Bucket(null, this.contentEquals));
+    }
+    if (!buckets.get(hash).has(value)) {
+        buckets.get(hash).add(value);
+        this.length++;
+        return true;
+    }
+    return false;
+};
+
+FastSet.prototype.reduce = function (callback, basis /*, thisp*/) {
+    var thisp = arguments[2];
+    var buckets = this.buckets;
+    var index = 0;
+    return buckets.reduce(function (basis, bucket) {
+        return bucket.reduce(function (basis, value) {
+            return callback.call(thisp, basis, value, index++, this);
+        }, basis, this);
+    }, basis, this);
+};
+
+FastSet.prototype.one = function () {
+    if (this.length > 0) {
+        return this.buckets.one().one();
+    }
+};
+
+FastSet.prototype.iterate = function () {
+    return this.buckets.valuesArray().flatten().iterate();
+};
+
+FastSet.prototype.log = function (charmap, logNode, callback, thisp) {
+    charmap = charmap || TreeLog.unicodeSharp;
+    logNode = logNode || this.logNode;
+    if (!callback) {
+        callback = console.log;
+        thisp = console;
+    }
+    callback = callback.bind(thisp);
+
+    var buckets = this.buckets, bucketsSize = buckets.size,
+        mapIter = buckets.keys(), hash, index = 0,
+        branch, leader, bucket;
+
+    while (hash = mapIter.next().value) {
+        if (index === bucketsSize - 1) {
+            branch = charmap.fromAbove;
+            leader = ' ';
+        } else if (index === 0) {
+            branch = charmap.branchDown;
+            leader = charmap.strafe;
+        } else {
+            branch = charmap.fromBoth;
+            leader = charmap.strafe;
+        }
+        bucket = buckets.get(hash);
+        callback.call(thisp, branch + charmap.through + charmap.branchDown + ' ' + hash);
+        bucket.forEach(function (value, node) {
+            var branch, below, written;
+            if (node === bucket.head.prev) {
+                branch = charmap.fromAbove;
+                below = ' ';
+            } else {
+                branch = charmap.fromBoth;
+                below = charmap.strafe;
+            }
+            logNode(
+                node,
+                function (line) {
+                    if (!written) {
+                        callback.call(thisp, leader + ' ' + branch + charmap.through + charmap.through + line);
+                        written = true;
+                    } else {
+                        callback.call(thisp, leader + ' ' + below + '  ' + line);
+                    }
+                },
+                function (line) {
+                    callback.call(thisp, leader + ' ' + charmap.strafe + '  ' + line);
+                }
+            );
+        });
+        index++;
+    }
+
+    //var hashes = buckets.keysArray();
+    // hashes.forEach(function (hash, index) {
+    //     var branch;
+    //     var leader;
+    //     if (index === hashes.length - 1) {
+    //         branch = charmap.fromAbove;
+    //         leader = ' ';
+    //     } else if (index === 0) {
+    //         branch = charmap.branchDown;
+    //         leader = charmap.strafe;
+    //     } else {
+    //         branch = charmap.fromBoth;
+    //         leader = charmap.strafe;
+    //     }
+    //     var bucket = buckets.get(hash);
+    //     callback.call(thisp, branch + charmap.through + charmap.branchDown + ' ' + hash);
+    //     bucket.forEach(function (value, node) {
+    //         var branch, below;
+    //         if (node === bucket.head.prev) {
+    //             branch = charmap.fromAbove;
+    //             below = ' ';
+    //         } else {
+    //             branch = charmap.fromBoth;
+    //             below = charmap.strafe;
+    //         }
+    //         var written;
+    //         logNode(
+    //             node,
+    //             function (line) {
+    //                 if (!written) {
+    //                     callback.call(thisp, leader + ' ' + branch + charmap.through + charmap.through + line);
+    //                     written = true;
+    //                 } else {
+    //                     callback.call(thisp, leader + ' ' + below + '  ' + line);
+    //                 }
+    //             },
+    //             function (line) {
+    //                 callback.call(thisp, leader + ' ' + charmap.strafe + '  ' + line);
+    //             }
+    //         );
+    //     });
+    // });
+};
+
+FastSet.prototype.logNode = function (node, write) {
+    var value = node.value;
+    if (Object(value) === value) {
+        JSON.stringify(value, null, 4).split("\n").forEach(function (line) {
+            write(" " + line);
+        });
+    } else {
+        write(" " + value);
+    }
+};
+
+
+/***/ }),
+
+/***/ 3135:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+module.exports = List;
+
+var Shim = __webpack_require__(9179);
+var GenericCollection = __webpack_require__(8488);
+var GenericOrder = __webpack_require__(1650);
+
+function List(values, equals, getDefault) {
+    return List._init(List, this, values, equals, getDefault);
+}
+
+List._init = function (constructor, object, values, equals, getDefault) {
+    if (!(object instanceof constructor)) {
+        return new constructor(values, equals, getDefault);
+    }
+    var head = object.head = new object.Node();
+    head.next = head;
+    head.prev = head;
+    object.contentEquals = equals || Object.equals;
+    object.getDefault = getDefault || Function.noop;
+    object.length = 0;
+    object.addEach(values);
+}
+
+List.List = List; // hack so require("list").List will work in MontageJS
+
+Object.addEach(List.prototype, GenericCollection.prototype);
+Object.addEach(List.prototype, GenericOrder.prototype);
+
+List.from = GenericCollection.from;
+
+List.prototype.constructClone = function (values) {
+    return new this.constructor(values, this.contentEquals, this.getDefault);
+};
+
+List.prototype.find = function (value, equals, index) {
+    equals = equals || this.contentEquals;
+    var head = this.head;
+    var at = this.scan(index, head.next);
+    while (at !== head) {
+        if (equals(at.value, value)) {
+            return at;
+        }
+        at = at.next;
+    }
+};
+
+List.prototype.findLast = function (value, equals, index) {
+    equals = equals || this.contentEquals;
+    var head = this.head;
+    var at = this.scan(index, head.prev);
+    while (at !== head) {
+        if (equals(at.value, value)) {
+            return at;
+        }
+        at = at.prev;
+    }
+};
+
+List.prototype.has = function (value, equals) {
+    return !!this.find(value, equals);
+};
+
+List.prototype.get = function (value, equals) {
+    var found = this.find(value, equals);
+    if (found) {
+        return found.value;
+    }
+    return this.getDefault(value);
+};
+
+// LIFO (delete removes the most recently added equivalent value)
+List.prototype["delete"] = function (value, equals) {
+    var found = this.findLast(value, equals);
+    if (found) {
+        found["delete"]();
+        this.length--;
+        return true;
+    }
+    return false;
+};
+
+List.prototype.deleteAll = function (value, equals) {
+    equals = equals || this.contentEquals;
+    var head = this.head;
+    var at = head.next;
+    var count = 0;
+    while (at !== head) {
+        if (equals(value, at.value)) {
+            at["delete"]();
+            count++;
+        }
+        at = at.next;
+    }
+    this.length -= count;
+    return count;
+};
+
+List.prototype.clear = function () {
+    this.head.next = this.head.prev = this.head;
+    this.length = 0;
+};
+
+List.prototype.add = function (value) {
+    var node = new this.Node(value)
+    return this._addNode(node);
+};
+
+List.prototype._addNode = function (node) {
+    this.head.addBefore(node);
+    this.length++;
+    return true;
+};
+
+List.prototype.push = function () {
+    var head = this.head;
+    for (var i = 0; i < arguments.length; i++) {
+        var value = arguments[i];
+        var node = new this.Node(value);
+        head.addBefore(node);
+    }
+    this.length += arguments.length;
+};
+
+List.prototype.unshift = function () {
+    var at = this.head;
+    for (var i = 0; i < arguments.length; i++) {
+        var value = arguments[i];
+        var node = new this.Node(value);
+        at.addAfter(node);
+        at = node;
+    }
+    this.length += arguments.length;
+};
+
+List.prototype._shouldPop = function () {
+    var value;
+    var head = this.head;
+    if (head.prev !== head) {
+        value = head.prev.value;
+    }
+    return value;
+}
+
+List.prototype.pop = function (_before, _after) {
+    var value;
+    var head = this.head;
+    if (head.prev !== head) {
+        value = head.prev.value;
+        var index = this.length - 1;
+        var popDispatchValueArray = _before ? _before.call(this,value,index) : void 0;
+        head.prev['delete']();
+        this.length--;
+        _after ? _after.call(this,value,index, popDispatchValueArray) : void 0;
+    }
+    return value;
+};
+
+List.prototype.shift = function (_before, _after) {
+    var value;
+    var head = this.head;
+    if (head.prev !== head) {
+        value = head.next.value;
+        var dispatchValueArray = _before ? _before.call(this,value,0) : void 0;
+        head.next['delete']();
+        this.length--;
+        _after ? _after.call(this,value,0,dispatchValueArray) : void 0;
+    }
+    return value;
+};
+
+List.prototype.peek = function () {
+    if (this.head !== this.head.next) {
+        return this.head.next.value;
+    }
+};
+
+List.prototype.poke = function (value) {
+    if (this.head !== this.head.next) {
+        this.head.next.value = value;
+    } else {
+        this.push(value);
+    }
+};
+
+List.prototype.one = function () {
+    return this.peek();
+};
+
+// TODO
+// List.prototype.indexOf = function (value) {
+// };
+
+// TODO
+// List.prototype.lastIndexOf = function (value) {
+// };
+
+// an internal utility for coercing index offsets to nodes
+List.prototype.scan = function (at, fallback) {
+    var head = this.head;
+    if (typeof at === "number") {
+        var count = at;
+        if (count >= 0) {
+            at = head.next;
+            while (count) {
+                count--;
+                at = at.next;
+                if (at == head) {
+                    break;
+                }
+            }
+        } else {
+            at = head;
+            while (count < 0) {
+                count++;
+                at = at.prev;
+                if (at == head) {
+                    break;
+                }
+            }
+        }
+        return at;
+    } else {
+        return at || fallback;
+    }
+};
+
+// at and end may both be positive or negative numbers (in which cases they
+// correspond to numeric indicies, or nodes)
+List.prototype.slice = function (at, end) {
+    var sliced = [];
+    var head = this.head;
+    at = this.scan(at, head.next);
+    end = this.scan(end, head);
+
+    while (at !== end && at !== head) {
+        sliced.push(at.value);
+        at = at.next;
+    }
+
+    return sliced;
+};
+
+List.prototype.splice = function (at, length /*...plus*/) {
+    return this.swap(at, length, Array.prototype.slice.call(arguments, 2));
+};
+
+List.prototype.swap = function (start, length, plus, _before, _after) {
+    var initial = start;
+    // start will be head if start is null or -1 (meaning from the end), but
+    // will be head.next if start is 0 (meaning from the beginning)
+    start = this.scan(start, this.head);
+    if (length == null) {
+        length = Infinity;
+    }
+    plus = Array.from(plus);
+
+    // collect the minus array
+    var minus = [];
+    var at = start;
+    while (length-- && length >= 0 && at !== this.head) {
+        minus.push(at.value);
+        at = at.next;
+    }
+
+    // before range change
+    var index, startNode;
+    index = _before ? _before.call(this, start, plus, minus) : void 0;
+
+    // delete minus
+    var at = start;
+    for (var i = 0, at = start; i < minus.length; i++, at = at.next) {
+        at["delete"]();
+    }
+    // add plus
+    if (initial == null && at === this.head) {
+        at = this.head.next;
+    }
+    for (var i = 0; i < plus.length; i++) {
+        var node = new this.Node(plus[i]);
+        at.addBefore(node);
+    }
+    // adjust length
+    this.length += plus.length - minus.length;
+
+    _after ? _after.call(this, start, plus, minus) : void 0;
+
+    return minus;
+};
+
+List.prototype.reverse = function () {
+    var at = this.head;
+    do {
+        var temp = at.next;
+        at.next = at.prev;
+        at.prev = temp;
+        at = at.next;
+    } while (at !== this.head);
+    return this;
+};
+
+List.prototype.sort = function () {
+    this.swap(0, this.length, this.sorted.apply(this, arguments));
+};
+
+// TODO account for missing basis argument
+List.prototype.reduce = function (callback, basis /*, thisp*/) {
+    var thisp = arguments[2];
+    var head = this.head;
+    var at = head.next;
+    while (at !== head) {
+        basis = callback.call(thisp, basis, at.value, at, this);
+        at = at.next;
+    }
+    return basis;
+};
+
+List.prototype.reduceRight = function (callback, basis /*, thisp*/) {
+    var thisp = arguments[2];
+    var head = this.head;
+    var at = head.prev;
+    while (at !== head) {
+        basis = callback.call(thisp, basis, at.value, at, this);
+        at = at.prev;
+    }
+    return basis;
+};
+
+List.prototype.updateIndexes = function (node, index) {
+    while (node !== this.head) {
+        node.index = index++;
+        node = node.next;
+    }
+};
+
+
+List.prototype.iterate = function () {
+    return new ListIterator(this.head);
+};
+
+function ListIterator(head) {
+    this.head = head;
+    this.at = head.next;
+};
+
+ListIterator.prototype.__iterationObject = null;
+Object.defineProperty(ListIterator.prototype,"_iterationObject", {
+    get: function() {
+        return this.__iterationObject || (this.__iterationObject = { done: false, value:null});
+    }
+});
+
+
+ListIterator.prototype.next = function () {
+    if (this.at === this.head) {
+        this._iterationObject.done = true;
+        this._iterationObject.value = void 0;
+    } else {
+        var value = this.at.value;
+        this.at = this.at.next;
+        this._iterationObject.value = value;
+    }
+    return this._iterationObject;
+};
+
+List.prototype.Node = Node;
+
+function Node(value) {
+    this.value = value;
+    this.prev = null;
+    this.next = null;
+};
+
+Node.prototype["delete"] = function () {
+    this.prev.next = this.next;
+    this.next.prev = this.prev;
+};
+
+Node.prototype.addBefore = function (node) {
+    var prev = this.prev;
+    this.prev = node;
+    node.prev = prev;
+    prev.next = node;
+    node.next = this;
+};
+
+Node.prototype.addAfter = function (node) {
+    var next = this.next;
+    this.next = node;
+    node.next = next;
+    next.prev = node;
+    node.prev = this;
+};
+
+
+/***/ }),
+
+/***/ 4410:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+var Shim = __webpack_require__(9179);
+var GenericCollection = __webpack_require__(8488);
+var Map, GlobalMap, CollectionsMap;
+
+if((global.Map !== void 0) && (typeof global.Set.prototype.values === "function")) {
+
+    Map = module.exports = global.Map,
+    GlobalMap = Map;
+    Map.Map = Map; // hack so require("map").Map will work in MontageJS
+
+    // use different strategies for making sets observable between Internet
+    // Explorer and other browsers.
+    var protoIsSupported = {}.__proto__ === Object.prototype,
+        map_makeObservable;
+
+    if (protoIsSupported) {
+        map_makeObservable = function () {
+            this.__proto__ = ChangeDispatchMap;
+        };
+    } else {
+        map_makeObservable = function () {
+            Object.defineProperties(this, observableSetProperties);
+        };
+    }
+
+    Object.defineProperty(Map.prototype, "makeObservable", {
+        value: map_makeObservable,
+        writable: true,
+        configurable: true,
+        enumerable: false
+    });
+
+    //This is a no-op test in property-changes.js - PropertyChanges.prototype.makePropertyObservable, so might as well not pay the price every time....
+    Object.defineProperty(Map.prototype, "makePropertyObservable", {
+        value: function(){},
+        writable: true,
+        configurable: true,
+        enumerable: false
+    });
+
+
+    Map.prototype.constructClone = function (values) {
+        return new this.constructor(values);
+    };
+
+    Map.prototype.isMap = true;
+    Map.prototype.addEach = function (values) {
+        if (values && Object(values) === values) {
+            if (typeof values.forEach === "function") {
+                // copy map-alikes
+                if (values.isMap === true) {
+                    values.forEach(function (value, key) {
+                        this.set(key, value);
+                    }, this);
+                // iterate key value pairs of other iterables
+                } else {
+                    values.forEach(function (pair) {
+                        this.set(pair[0], pair[1]);
+                    }, this);
+                }
+            } else if (typeof values.length === "number") {
+                // Array-like objects that do not implement forEach, ergo,
+                // Arguments
+                for (var i = 0; i < values.length; i++) {
+                    this.add(values[i], i);
+                }
+            } else {
+                // copy other objects as map-alikes
+                Object.keys(values).forEach(function (key) {
+                    this.set(key, values[key]);
+                }, this);
+            }
+        } else if (values && typeof values.length === "number") {
+            // String
+            for (var i = 0; i < values.length; i++) {
+                this.add(values[i], i);
+            }
+        }
+        return this;
+    };
+
+    Map.prototype.add = function (value, key) {
+        return this.set(key, value);
+    };
+
+    Map.prototype.reduce = function (callback, basis /*, thisp*/) {
+        var thisp = arguments[2];
+        this.forEach(function(value, key, map) {
+            basis = callback.call(thisp, basis, value, key, this);
+        });
+        return basis;
+    };
+
+    Map.prototype.reduceRight = function (callback, basis /*, thisp*/) {
+        var thisp = arguments[2];
+        var keysIterator = this.keys();
+        var size = this.size;
+        var reverseOrder = new Array(this.size);
+        var aKey, i = 0;
+        while ((aKey = keysIterator.next().value)) {
+            reverseOrder[--size] = aKey;
+        }
+        while (i++ < size) {
+            basis = callback.call(thisp, basis, this.get(reverseOrder[i]), reverseOrder[i], this);
+        }
+        return basis;
+    };
+
+    Map.prototype.equals = function (that, equals) {
+        equals = equals || Object.equals;
+        if (this === that) {
+            return true;
+        } else if (that && typeof that.every === "function") {
+            return that.size === this.size && that.every(function (value, key) {
+                return equals(this.get(key), value);
+            }, this);
+        } else {
+            var keys = Object.keys(that);
+            return keys.length === this.size && Object.keys(that).every(function (key) {
+                return equals(this.get(key), that[key]);
+            }, this);
+        }
+    };
+
+    var _keysArrayFunction = function(value,key) {return key;};
+    Map.prototype.keysArray = function() {
+        return this.map(_keysArrayFunction);
+    }
+    var _valuesArrayFunction = function(value,key) {return value;};
+    Map.prototype.valuesArray = function() {
+        return this.map(_valuesArrayFunction);
+    }
+    var _entriesArrayFunction = function(value,key) {return [key,value];};
+    Map.prototype.entriesArray = function() {
+        return this.map(_entriesArrayFunction);
+    }
+    Map.prototype.toJSON = function () {
+        return this.entriesArray();
+    };
+
+    // XXX deprecated
+    Map.prototype.items = function () {
+        return this.entriesArray();
+    };
+
+    // Map.prototype.contentEquals = Object.equals;
+    // Map.prototype.contentHash = Object.hash;
+
+
+    Map.from = function (value) {
+        var result = new this;
+        result.addEach(value);
+        return result;
+    };
+
+
+    //Backward compatibility:
+    Object.defineProperty(Map.prototype,"length",{
+        get: function() {
+            return this.size;
+        },
+        enumerable: true,
+        configurable:true
+    });
+
+
+    var map_clear = Map.prototype.clear,
+        map_set = Map.prototype.set,
+        map_delete = Map.prototype.delete;
+
+    var observableMapProperties = {
+        clear : {
+            value: function () {
+                var keys;
+                if (this.dispatchesMapChanges) {
+                    this.forEach(function (value, key) {
+                        this.dispatchBeforeMapChange(key, value);
+                    }, this);
+                    keys = this.keysArray();
+                }
+                map_clear.call(this);
+                if (this.dispatchesMapChanges) {
+                    keys.forEach(function (key) {
+                        this.dispatchMapChange(key);
+                    }, this);
+                }
+            },
+            writable: true,
+            configurable: true
+
+        },
+        set : {
+            value: function (key, value) {
+                var found = this.get(key);
+                if (found) { // update
+                    if (this.dispatchesMapChanges) {
+                        this.dispatchBeforeMapChange(key, found);
+                    }
+
+                    map_set.call(this,key, value);
+
+                    if (this.dispatchesMapChanges) {
+                        this.dispatchMapChange(key, value);
+                    }
+                } else { // create
+                    if (this.dispatchesMapChanges) {
+                        this.dispatchBeforeMapChange(key, undefined);
+                    }
+
+                    map_set.call(this,key, value);
+
+                    if (this.dispatchesMapChanges) {
+                        this.dispatchMapChange(key, value);
+                    }
+                }
+                return this;
+            },
+            writable: true,
+            configurable: true
+        },
+
+        "delete": {
+            value: function (key) {
+                if (this.has(key)) {
+                    if (this.dispatchesMapChanges) {
+                        this.dispatchBeforeMapChange(key, this.get(key));
+                    }
+                    map_delete.call(this,key);
+
+                    if (this.dispatchesMapChanges) {
+                        this.dispatchMapChange(key, undefined);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }
+    };
+
+
+
+    Object.addEach(Map.prototype, GenericCollection.prototype, false);
+
+    var ChangeDispatchMap = Object.create(Map.prototype, observableMapProperties);
+}
+
+    var Set = __webpack_require__(5917).CollectionsSet;
+    var GenericMap = __webpack_require__(2049);
+
+    CollectionsMap = Map = function Map(values, equals, hash, getDefault) {
+        if (!(this instanceof Map)) {
+            return new Map(values, equals, hash, getDefault);
+        }
+        equals = equals || Object.equals;
+        hash = hash || Object.hash;
+        getDefault = getDefault || Function.noop;
+        this.contentEquals = equals;
+        this.contentHash = hash;
+        this.getDefault = getDefault;
+        this.store = new Set(
+            undefined,
+            function keysEqual(a, b) {
+                return equals(a.key, b.key);
+            },
+            function keyHash(item) {
+                return hash(item.key);
+            }
+        );
+        this.length = 0;
+        this.addEach(values);
+    }
+
+    Map.Map = Map; // hack so require("map").Map will work in MontageJS
+
+    Object.addEach(Map.prototype, GenericCollection.prototype);
+    Object.addEach(Map.prototype, GenericMap.prototype); // overrides GenericCollection
+    Object.defineProperty(Map.prototype,"size",GenericCollection._sizePropertyDescriptor);
+
+    Map.from = GenericCollection.from;
+
+    Map.prototype.constructClone = function (values) {
+        return new this.constructor(
+            values,
+            this.contentEquals,
+            this.contentHash,
+            this.getDefault
+        );
+    };
+
+    Map.prototype.log = function (charmap, logNode, callback, thisp) {
+        logNode = logNode || this.logNode;
+        this.store.log(charmap, function (node, log, logBefore) {
+            logNode(node.value.value, log, logBefore);
+        }, callback, thisp);
+    };
+
+    Map.prototype.logNode = function (node, log) {
+        log(' key: ' + node.key);
+        log(' value: ' + node.value);
+    };
+
+    if(!GlobalMap) {
+        module.exports = CollectionsMap;
+    }
+    else {
+        module.exports = GlobalMap;
+        GlobalMap.CollectionsMap = CollectionsMap;
+    }
+
+
+/***/ }),
+
+/***/ 5917:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+var Shim = __webpack_require__(9179);
+var GenericCollection = __webpack_require__(8488);
+var GenericSet = __webpack_require__(9918);
+var Set, GlobalSet, CollectionsSet;
+
+
+if((global.Set !== void 0) && (typeof global.Set.prototype.values === "function")) {
+
+    GlobalSet = module.exports = global.Set;
+    GlobalSet.Set = GlobalSet; // hack so require("set").Set will work in MontageJS
+
+    GlobalSet.prototype.reduce = function (callback, basis /*, thisp*/) {
+        var thisp = arguments[2];
+        this.forEach(function(value) {
+            basis = callback.call(thisp, basis, value, this);
+        });
+        return basis;
+    };
+
+    GlobalSet.prototype.reduceRight = function (callback, basis /*, thisp*/) {
+        var thisp = arguments[2];
+        var setIterator = this.values();
+        var size = this.size;
+        var reverseOrder = new Array(this.size);
+        var value, i = size;
+        // Fill 'reverseOrder' with values of Set in inverted order.
+        while ((value = setIterator.next().value)) {
+            reverseOrder[--i] = value;
+        }
+        // Iterate over reversed values and callback.
+        while (i < size) {
+            basis = callback.call(thisp, basis, reverseOrder[i++], this);
+        }
+        return basis;
+    };
+
+    GlobalSet.prototype.equals = function (that, equals) {
+        var self = this;
+        return (
+            that && typeof that.reduce === "function" &&
+            this.size === (that.size || that.length) &&
+            that.reduce(function (equal, value) {
+                return equal && self.has(value, equals);
+            }, true)
+        );
+    };
+
+    GlobalSet.prototype.constructClone = function (values) {
+        return new this.constructor(values, this.contentEquals, this.contentHash, this.getDefault);
+    };
+
+    GlobalSet.prototype.toJSON = function () {
+        return this.entriesArray();
+    };
+
+    GlobalSet.prototype.one = function () {
+        if (this.size > 0) {
+            return this.values().next().value;
+        }
+        return undefined;
+    };
+
+    GlobalSet.prototype.pop = function () {
+        if (this.size) {
+            var setIterator = this.values(), aValue, value;
+            while(aValue = setIterator.next().value) {
+                value = aValue;
+            }
+            this["delete"](value,this.size-1);
+            return value;
+        }
+    };
+
+    GlobalSet.prototype.shift = function () {
+        if (this.size) {
+            var firstValue = this.values().next().value;
+            this["delete"](firstValue,0);
+            return firstValue;
+        }
+    };
+
+    //Backward compatibility:
+    Object.defineProperty(GlobalSet.prototype,"length",{
+        get: function() {
+            return this.size;
+        },
+        enumerable: true,
+        configurable:true
+    });
+
+    GlobalSet.from = function (value) {
+        var result = (new this);
+        result.addEach(value);
+        return result;
+    };
+
+    Object.addEach(GlobalSet.prototype, GenericCollection.prototype, false);
+    Object.addEach(GlobalSet.prototype, GenericSet.prototype, false);
+
+}
+
+
+
+    var List = __webpack_require__(3135);
+    var FastSet = __webpack_require__(7307);
+    var Iterator = __webpack_require__(6387);
+
+    CollectionsSet = function CollectionsSet(values, equals, hash, getDefault) {
+        return CollectionsSet._init(CollectionsSet, this, values, equals, hash, getDefault);
+    }
+
+    CollectionsSet._init = function (constructor, object, values, equals, hash, getDefault) {
+        if (!(object instanceof constructor)) {
+            return new constructor(values, equals, hash, getDefault);
+        }
+        equals = equals || Object.equals;
+        hash = hash || Object.hash;
+        getDefault = getDefault || Function.noop;
+        object.contentEquals = equals;
+        object.contentHash = hash;
+        object.getDefault = getDefault;
+        // a list of values in insertion order, used for all operations that depend
+        // on iterating in insertion order
+        object.order = new object.Order(undefined, equals);
+        // a set of nodes from the order list, indexed by the corresponding value,
+        // used for all operations that need to quickly seek  value in the list
+        object.store = new object.Store(
+            undefined,
+            function (a, b) {
+                return equals(a.value, b.value);
+            },
+            function (node) {
+                return hash(node.value);
+            }
+        );
+        object.length = 0;
+        object.addEach(values);
+
+    }
+
+    CollectionsSet.Set = CollectionsSet; // hack so require("set").Set will work in MontageJS
+    CollectionsSet.CollectionsSet = CollectionsSet;
+
+    Object.addEach(CollectionsSet.prototype, GenericCollection.prototype);
+    Object.addEach(CollectionsSet.prototype, GenericSet.prototype);
+
+    CollectionsSet.from = GenericCollection.from;
+
+    Object.defineProperty(CollectionsSet.prototype,"size",GenericCollection._sizePropertyDescriptor);
+
+    //Overrides for consistency:
+    // Set.prototype.forEach = GenericCollection.prototype.forEach;
+
+
+    CollectionsSet.prototype.Order = List;
+    CollectionsSet.prototype.Store = FastSet;
+
+    CollectionsSet.prototype.constructClone = function (values) {
+        return new this.constructor(values, this.contentEquals, this.contentHash, this.getDefault);
+    };
+
+    CollectionsSet.prototype.has = function (value) {
+        var node = new this.order.Node(value);
+        return this.store.has(node);
+    };
+
+    CollectionsSet.prototype.get = function (value, equals) {
+        if (equals) {
+            throw new Error("Set#get does not support second argument: equals");
+        }
+        var node = new this.order.Node(value);
+        node = this.store.get(node);
+        if (node) {
+            return node.value;
+        } else {
+            return this.getDefault(value);
+        }
+    };
+
+    CollectionsSet.prototype.add = function (value) {
+        var node = new this.order.Node(value);
+        if (!this.store.has(node)) {
+            var index = this.length;
+            this.order.add(value);
+            node = this.order.head.prev;
+            this.store.add(node);
+            this.length++;
+            return true;
+        }
+        return false;
+    };
+
+    CollectionsSet.prototype["delete"] = function (value, equals) {
+        if (equals) {
+            throw new Error("Set#delete does not support second argument: equals");
+        }
+        var node = new this.order.Node(value);
+        if (this.store.has(node)) {
+            node = this.store.get(node);
+            this.store["delete"](node); // removes from the set
+            this.order.splice(node, 1); // removes the node from the list
+            this.length--;
+            return true;
+        }
+        return false;
+    };
+
+    CollectionsSet.prototype.pop = function () {
+        if (this.length) {
+            var result = this.order.head.prev.value;
+            this["delete"](result);
+            return result;
+        }
+    };
+
+    CollectionsSet.prototype.shift = function () {
+        if (this.length) {
+            var result = this.order.head.next.value;
+            this["delete"](result);
+            return result;
+        }
+    };
+
+    CollectionsSet.prototype.one = function () {
+        if (this.length > 0) {
+            return this.store.one().value;
+        }
+    };
+
+    CollectionsSet.prototype.clear = function () {
+        this.store.clear();
+        this.order.clear();
+        this.length = 0;
+    };
+    Object.defineProperty(CollectionsSet.prototype,"_clear", {
+        value: CollectionsSet.prototype.clear
+    });
+
+    CollectionsSet.prototype.reduce = function (callback, basis /*, thisp*/) {
+        var thisp = arguments[2];
+        var list = this.order;
+        var index = 0;
+        return list.reduce(function (basis, value) {
+            return callback.call(thisp, basis, value, index++, this);
+        }, basis, this);
+    };
+
+    CollectionsSet.prototype.reduceRight = function (callback, basis /*, thisp*/) {
+        var thisp = arguments[2];
+        var list = this.order;
+        var index = this.length - 1;
+        return list.reduceRight(function (basis, value) {
+            return callback.call(thisp, basis, value, index--, this);
+        }, basis, this);
+    };
+
+    CollectionsSet.prototype.iterate = function () {
+        return this.order.iterate();
+    };
+
+    CollectionsSet.prototype.values = function () {
+        return new Iterator(this.valuesArray(), true);
+    };
+
+    CollectionsSet.prototype.log = function () {
+        var set = this.store;
+        return set.log.apply(set, arguments);
+    };
+
+
+
+if(!GlobalSet) {
+    module.exports = CollectionsSet;
+}
+else {
+    GlobalSet.prototype.valuesArray = GenericSet.prototype.valuesArray;
+    GlobalSet.prototype.entriesArray = GenericSet.prototype.entriesArray;
+    module.exports = GlobalSet;
+    GlobalSet.CollectionsSet = CollectionsSet;
+}
+
+
+/***/ }),
+
+/***/ 2045:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+__webpack_require__(5138);
+var GenericCollection = __webpack_require__(8488);
+var GenericOrder = __webpack_require__(1650);
+var RangeChanges = __webpack_require__(1843);
+
+// by Petka Antonov
+// https://github.com/petkaantonov/deque/blob/master/js/deque.js
+// Deque specifically uses
+// http://en.wikipedia.org/wiki/Circular_buffer#Use_a_Fill_Count
+// 1. Incrementally maintained length
+// 2. Modulus avoided by using only powers of two for the capacity
+
+module.exports = Deque;
+function Deque(values, capacity) {
+    if (!(this instanceof Deque)) {
+        return new Deque(values, capacity);
+    }
+    this.capacity = this.snap(capacity);
+    this.init();
+    this.length = 0;
+    this.front = 0;
+    this.addEach(values);
+}
+
+Object.addEach(Deque.prototype, GenericCollection.prototype);
+Object.addEach(Deque.prototype, GenericOrder.prototype);
+Object.addEach(Deque.prototype, RangeChanges.prototype);
+
+Deque.from = GenericCollection.from;
+
+Deque.prototype.maxCapacity = (1 << 30) | 0;
+Deque.prototype.minCapacity = 16;
+
+Deque.prototype.constructClone = function (values) {
+    return new this.constructor(values, this.capacity)
+};
+
+Deque.prototype.add = function (value) {
+    this.push(value);
+};
+
+Deque.prototype.push = function (value /* or ...values */) {
+    var argsLength = arguments.length;
+    var length = this.length;
+
+    if (this.dispatchesRangeChanges) {
+        var plus = new Array(argsLength);
+        for (var argIndex = 0; argIndex < argsLength; ++argIndex) {
+            plus[argIndex] = arguments[argIndex];
+        }
+        var minus = [];
+        this.dispatchBeforeRangeChange(plus, minus, length);
+    }
+
+    if (argsLength > 1) {
+        var capacity = this.capacity;
+        if (length + argsLength > capacity) {
+            for (var argIndex = 0; argIndex < argsLength; ++argIndex) {
+                this.ensureCapacity(length + 1);
+                var j = (this.front + length) & (this.capacity - 1);
+                this[j] = arguments[argIndex];
+                length++;
+                this.length = length;
+            }
+        }
+        else {
+            var j = this.front;
+            for (var argIndex = 0; argIndex < argsLength; ++argIndex) {
+                this[(j + length) & (capacity - 1)] = arguments[argIndex];
+                j++;
+            }
+            this.length = length + argsLength;
+        }
+
+    } else if (argsLength === 1) {
+        this.ensureCapacity(length + 1);
+        var index = (this.front + length) & (this.capacity - 1);
+        this[index] = value;
+        this.length = length + 1;
+    }
+
+    if (this.dispatchesRangeChanges) {
+        this.dispatchRangeChange(plus, minus, length);
+    }
+
+    return this.length;
+};
+
+Deque.prototype.pop = function () {
+    var length = this.length;
+    if (length === 0) {
+        return;
+    }
+    var index = (this.front + length - 1) & (this.capacity - 1);
+    var result = this[index];
+
+    if (this.dispatchesRangeChanges) {
+        this.dispatchBeforeRangeChange([], [result], length - 1);
+    }
+
+    this[index] = void 0;
+    this.length = length - 1;
+
+    if (this.dispatchesRangeChanges) {
+        this.dispatchRangeChange([], [result], length - 1);
+    }
+
+    return result;
+};
+
+Deque.prototype.shift = function () {
+    if (this.length !== 0) {
+        var front = this.front;
+        var result = this[front];
+
+        if (this.dispatchesRangeChanges) {
+            this.dispatchBeforeRangeChange([], [result], 0);
+        }
+
+        this[front] = void 0;
+        this.front = (front + 1) & (this.capacity - 1);
+        this.length--;
+
+        if (this.dispatchesRangeChanges) {
+            this.dispatchRangeChange([], [result], 0);
+        }
+
+        return result;
+    }
+};
+
+Deque.prototype.unshift = function (value /* or ...values */) {
+    var length = this.length;
+    var argsLength = arguments.length;
+
+    if (this.dispatchesRangeChanges) {
+        var plus = new Array(argsLength);
+        for (var argIndex = 0; argIndex < argsLength; ++argIndex) {
+            plus[argIndex] = arguments[argIndex];
+        }
+        var minus = [];
+        this.dispatchBeforeRangeChange(plus, minus, 0);
+    }
+
+    if (argsLength > 1) {
+        var capacity = this.capacity;
+        if (length + argsLength > capacity) {
+            for (var argIndex = argsLength - 1; argIndex >= 0; argIndex--) {
+                this.ensureCapacity(length + 1);
+                var capacity = this.capacity;
+                var index = (
+                    (
+                        (
+                            ( this.front - 1 ) &
+                            ( capacity - 1)
+                        ) ^ capacity
+                    ) - capacity
+                );
+                this[index] = arguments[argIndex];
+                length++;
+                this.front = index;
+                this.length = length;
+            }
+        } else {
+            var front = this.front;
+            for (var argIndex = argsLength - 1; argIndex >= 0; argIndex--) {
+                var index = (
+                    (
+                        (
+                            (front - 1) &
+                            (capacity - 1)
+                        ) ^ capacity
+                    ) - capacity
+                );
+                this[index] = arguments[argIndex];
+                front = index;
+            }
+            this.front = front;
+            this.length = length + argsLength;
+        }
+    } else if (argsLength === 1) {
+        this.ensureCapacity(length + 1);
+        var capacity = this.capacity;
+        var index = (
+            (
+                (
+                    (this.front - 1) &
+                    (capacity - 1)
+                ) ^ capacity
+            ) - capacity
+        );
+        this[index] = value;
+        this.length = length + 1;
+        this.front = index;
+    }
+
+    if (this.dispatchesRangeChanges) {
+        this.dispatchRangeChange(plus, minus, 0);
+    }
+
+    return this.length;
+};
+
+Deque.prototype.clear = function () {
+    this.length = 0;
+    this.front = 0;
+    this.init();
+};
+
+Deque.prototype.ensureCapacity = function (capacity) {
+    if (this.capacity < capacity) {
+        this.grow(this.snap(this.capacity * 1.5 + 16));
+    }
+};
+
+Deque.prototype.grow = function (capacity) {
+    var oldFront = this.front;
+    var oldCapacity = this.capacity;
+    var oldContent = new Array(oldCapacity);
+    var length = this.length;
+
+    copy(this, 0, oldContent, 0, oldCapacity);
+    this.capacity = capacity;
+    this.init();
+    this.front = 0;
+    if (oldFront + length <= oldCapacity) {
+        // Can perform direct linear copy.
+        copy(oldContent, oldFront, this, 0, length);
+    } else {
+        // Cannot perform copy directly, perform as much as possible at the
+        // end, and then copy the rest to the beginning of the buffer.
+        var lengthBeforeWrapping = length - ((oldFront + length) & (oldCapacity - 1));
+        copy(oldContent, oldFront, this, 0, lengthBeforeWrapping);
+        copy(oldContent, 0, this, lengthBeforeWrapping, length - lengthBeforeWrapping);
+    }
+};
+
+Deque.prototype.init = function () {
+    for (var index = 0; index < this.capacity; ++index) {
+        this[index] = "nil"; // TODO void 0
+    }
+};
+
+Deque.prototype.snap = function (capacity) {
+    if (typeof capacity !== "number") {
+        return this.minCapacity;
+    }
+    return pow2AtLeast(
+        Math.min(this.maxCapacity, Math.max(this.minCapacity, capacity))
+    );
+};
+
+Deque.prototype.one = function () {
+    if (this.length > 0) {
+        return this[this.front];
+    }
+};
+
+Deque.prototype.peek = function () {
+    if (this.length === 0) {
+        return;
+    }
+    return this[this.front];
+};
+
+Deque.prototype.poke = function (value) {
+    if (this.length === 0) {
+        return;
+    }
+    this[this.front] = value;
+};
+
+Deque.prototype.peekBack = function () {
+    var length = this.length;
+    if (length === 0) {
+        return;
+    }
+    var index = (this.front + length - 1) & (this.capacity - 1);
+    return this[index];
+};
+
+Deque.prototype.pokeBack = function (value) {
+    var length = this.length;
+    if (length === 0) {
+        return;
+    }
+    var index = (this.front + length - 1) & (this.capacity - 1);
+    this[index] = value;
+};
+
+Deque.prototype.get = function (index) {
+    // Domain only includes integers
+    if (index !== (index | 0)) {
+        return;
+    }
+    // Support negative indicies
+    if (index < 0) {
+        index = index + this.length;
+    }
+    // Out of bounds
+    if (index < 0 || index >= this.length) {
+        return;
+    }
+    return this[(this.front + index) & (this.capacity - 1)];
+};
+
+Deque.prototype.indexOf = function (value, index) {
+    // Default start index at beginning
+    if (index == null) {
+        index = 0;
+    }
+    // Support negative indicies
+    if (index < 0) {
+        index = index + this.length;
+    }
+    // Left to right walk
+    var mask = this.capacity - 1;
+    for (; index < this.length; index++) {
+        var offset = (this.front + index) & mask;
+        if (this[offset] === value) {
+            return index;
+        }
+    }
+    return -1;
+};
+
+Deque.prototype.lastIndexOf = function (value, index) {
+    // Default start position at the end
+    if (index == null) {
+        index = this.length - 1;
+    }
+    // Support negative indicies
+    if (index < 0) {
+        index = index + this.length;
+    }
+    // Right to left walk
+    var mask = this.capacity - 1;
+    for (; index >= 0; index--) {
+        var offset = (this.front + index) & mask;
+        if (this[offset] === value) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+var deprecatedWarnNonce = {};
+function deprecatedWarn(msg, notOnce) {
+    if (
+        typeof console !== 'undefined' &&
+            typeof console.warn === 'function' &&
+                (notOnce !== true && deprecatedWarnNonce.hasOwnProperty(msg) === false)
+    ) {
+        console.warn(msg);
+        deprecatedWarnNonce[msg]++;
+    }
+}
+
+// TODO remove in v6 (not present in v2)
+Deque.prototype.find = function () {
+    deprecatedWarn('Deque#find function is deprecated please use Deque#findValue instead.');
+    return this.findValue.apply(this, arguments);
+};
+
+Deque.prototype.findValue = function (value, equals, index) {
+    equals = equals || Object.equals;
+    // Default start index at beginning
+    if (index == null) {
+        index = 0;
+    }
+    // Support negative indicies
+    if (index < 0) {
+        index = index + this.length;
+    }
+    // Left to right walk
+    var mask = this.capacity - 1;
+    for (; index < this.length; index++) {
+        var offset = (this.front + index) & mask;
+        if (equals(value, this[offset])) {
+            return index;
+        }
+    }
+    return -1;
+};
+
+// TODO remove in v6 (not present in v2)
+Deque.prototype.findLast = function () {
+    deprecatedWarn('Deque#findLast function is deprecated please use Deque#findLastValue instead.');
+    return this.findLastValue.apply(this, arguments);
+};
+
+Deque.prototype.findLastValue = function (value, equals, index) {
+    equals = equals || Object.equals;
+    // Default start position at the end
+    if (index == null) {
+        index = this.length - 1;
+    }
+    // Support negative indicies
+    if (index < 0) {
+        index = index + this.length;
+    }
+    // Right to left walk
+    var mask = this.capacity - 1;
+    for (; index >= 0; index--) {
+        var offset = (this.front + index) & mask;
+        if (equals(value, this[offset])) {
+            return index;
+        }
+    }
+    return -1;
+};
+
+Deque.prototype.has = function (value, equals) {
+    equals = equals || Object.equals;
+    // Left to right walk
+    var mask = this.capacity - 1;
+    for (var index = 0; index < this.length; index++) {
+        var offset = (this.front + index) & mask;
+        if (this[offset] === value) {
+            return true;
+        }
+    }
+    return false;
+};
+
+Deque.prototype.reduce = function (callback, basis /*, thisp*/) {
+    // TODO account for missing basis argument
+    var thisp = arguments[2];
+    var mask = this.capacity - 1;
+    for (var index = 0; index < this.length; index++) {
+        var offset = (this.front + index) & mask;
+        basis = callback.call(thisp, basis, this[offset], index, this);
+    }
+    return basis;
+};
+
+Deque.prototype.reduceRight = function (callback, basis /*, thisp*/) {
+    // TODO account for missing basis argument
+    var thisp = arguments[2];
+    var mask = this.capacity - 1;
+    for (var index = this.length - 1; index >= 0; index--) {
+        var offset = (this.front + index) & mask;
+        basis = callback.call(thisp, basis, this[offset], index, this);
+    }
+    return basis;
+};
+
+function copy(source, sourceIndex, target, targetIndex, length) {
+    for (var index = 0; index < length; ++index) {
+        target[index + targetIndex] = source[index + sourceIndex];
+    }
+}
+
+function pow2AtLeast(n) {
+    n = n >>> 0;
+    n = n - 1;
+    n = n | (n >> 1);
+    n = n | (n >> 2);
+    n = n | (n >> 4);
+    n = n | (n >> 8);
+    n = n | (n >> 16);
+    return n + 1;
+}
+
+
+/***/ }),
+
+/***/ 8488:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+module.exports = GenericCollection;
+function GenericCollection() {
+    throw new Error("Can't construct. GenericCollection is a mixin.");
+}
+
+var DOMTokenList = global.DOMTokenList || function(){};
+
+GenericCollection.EmptyArray = Object.freeze([]);
+
+GenericCollection.prototype.addEach = function (values, mapFn, thisp) {
+    //We want to eliminate everything but array like: Strings, Arrays, DOMTokenList
+    if(values && (values instanceof Array || (values instanceof DOMTokenList) || values instanceof String)) {
+        if(mapFn) {
+            for (var i = 0; i < values.length; i++) {
+                this.add(mapFn.call(thisp,values[i]), i);
+            }
+        } else {
+            for (var i = 0; i < values.length; i++) {
+                this.add(values[i], i);
+            }
+        }
+    }
+    else if (values && Object(values) === values) {
+        if (typeof values.forEach === "function") {
+            if(mapFn) {
+                values.map(mapFn, thisp).forEach(this.add, this);
+            } else {
+                values.forEach(this.add, this);
+            }
+        } else if(typeof values.next === "function") {
+            var value, i=0;
+            if(mapFn) {
+                while ((value = values.next().value)) {
+                    this.add(mapFn.call(thisp,value), i++);
+                }
+            }
+            else {
+                while ((value = values.next().value)) {
+                    this.add(value, i++);
+                }
+            }
+        } else if (typeof values.length === "number") {
+            // Array-like objects that do not implement forEach, ergo,
+            // Arguments
+            if(mapFn) {
+                for (var i = 0; i < values.length; i++) {
+                    this.add(mapFn.call(thisp,values[i]), i);
+                }
+            }
+            else {
+                for (var i = 0; i < values.length; i++) {
+                    this.add(values[i], i);
+                }
+            }
+        } else {
+            if(mapFn) {
+                Object.keys(values).forEach(function (key) {
+                    this.add(mapFn.call(thisp,values[key]), key);
+                }, this);
+            } else {
+                Object.keys(values).forEach(function (key) {
+                    this.add(values[key], key);
+                }, this);
+            }
+        }
+    }
+    return this;
+};
+
+// This is sufficiently generic for Map (since the value may be a key)
+// and ordered collections (since it forwards the equals argument)
+GenericCollection.prototype.deleteEach = function (values, equals) {
+    values.forEach(function (value) {
+        this["delete"](value, equals);
+    }, this);
+    return this;
+};
+
+// all of the following functions are implemented in terms of "reduce".
+// some need "constructClone".
+
+GenericCollection.prototype.forEach = function (callback /*, thisp*/) {
+    var thisp = arguments[1];
+    return this.reduce(function (undefined, value, key, object, depth) {
+        callback.call(thisp, value, key, object, depth);
+    }, undefined);
+};
+
+GenericCollection.prototype.map = function (callback /*, thisp*/) {
+    var thisp = arguments[1];
+    var result = [];
+    this.reduce(function (undefined, value, key, object, depth) {
+        result.push(callback.call(thisp, value, key, object, depth));
+    }, undefined);
+    return result;
+};
+
+GenericCollection.prototype.enumerate = function (start) {
+    if (start == null) {
+        start = 0;
+    }
+    var result = [];
+    this.reduce(function (undefined, value) {
+        result.push([start++, value]);
+    }, undefined);
+    return result;
+};
+
+GenericCollection.prototype.group = function (callback, thisp, equals) {
+    equals = equals || Object.equals;
+    var groups = [];
+    var keys = [];
+    this.forEach(function (value, key, object) {
+        var key = callback.call(thisp, value, key, object);
+        var index = keys.indexOf(key, equals);
+        var group;
+        if (index === -1) {
+            group = [];
+            groups.push([key, group]);
+            keys.push(key);
+        } else {
+            group = groups[index][1];
+        }
+        group.push(value);
+    });
+    return groups;
+};
+
+GenericCollection.prototype.toArray = function () {
+    return this.map(Function.identity);
+};
+
+// this depends on stringable keys, which apply to Array and Iterator
+// because they have numeric keys and all Maps since they may use
+// strings as keys.  List, Set, and SortedSet have nodes for keys, so
+// toObject would not be meaningful.
+GenericCollection.prototype.toObject = function () {
+    var object = {};
+    this.reduce(function (undefined, value, key) {
+        object[key] = value;
+    }, undefined);
+    return object;
+};
+
+GenericCollection.from = function () {
+    return this.apply(this,arguments);
+};
+
+GenericCollection.prototype.filter = function (callback /*, thisp*/) {
+    var thisp = arguments[1];
+    var result = this.constructClone();
+    this.reduce(function (undefined, value, key, object, depth) {
+        if (callback.call(thisp, value, key, object, depth)) {
+            result.add(value, key);
+        }
+    }, undefined);
+    return result;
+};
+
+GenericCollection.prototype.every = function (callback /*, thisp*/) {
+    var thisp = arguments[1];
+    return this.reduce(function (result, value, key, object, depth) {
+        return result && callback.call(thisp, value, key, object, depth);
+    }, true);
+};
+
+GenericCollection.prototype.some = function (callback /*, thisp*/) {
+    var thisp = arguments[1];
+    return this.reduce(function (result, value, key, object, depth) {
+        return result || callback.call(thisp, value, key, object, depth);
+    }, false);
+};
+
+GenericCollection.prototype.all = function () {
+    return this.every(Boolean);
+};
+
+GenericCollection.prototype.any = function () {
+    return this.some(Boolean);
+};
+
+GenericCollection.prototype.min = function (compare) {
+    compare = compare || this.contentCompare || Object.compare;
+    var first = true;
+    return this.reduce(function (result, value) {
+        if (first) {
+            first = false;
+            return value;
+        } else {
+            return compare(value, result) < 0 ? value : result;
+        }
+    }, undefined);
+};
+
+GenericCollection.prototype.max = function (compare) {
+    compare = compare || this.contentCompare || Object.compare;
+    var first = true;
+    return this.reduce(function (result, value) {
+        if (first) {
+            first = false;
+            return value;
+        } else {
+            return compare(value, result) > 0 ? value : result;
+        }
+    }, undefined);
+};
+
+GenericCollection.prototype.sum = function (zero) {
+    zero = zero === undefined ? 0 : zero;
+    return this.reduce(function (a, b) {
+        return a + b;
+    }, zero);
+};
+
+GenericCollection.prototype.average = function (zero) {
+    var sum = zero === undefined ? 0 : zero;
+    var count = zero === undefined ? 0 : zero;
+    this.reduce(function (undefined, value) {
+        sum += value;
+        count += 1;
+    }, undefined);
+    return sum / count;
+};
+
+GenericCollection.prototype.concat = function () {
+    var result = this.constructClone(this);
+    for (var i = 0; i < arguments.length; i++) {
+        result.addEach(arguments[i]);
+    }
+    return result;
+};
+
+GenericCollection.prototype.flatten = function () {
+    var self = this;
+    return this.reduce(function (result, array) {
+        array.forEach(function (value) {
+            this.push(value);
+        }, result, self);
+        return result;
+    }, []);
+};
+
+GenericCollection.prototype.zip = function () {
+    var table = Array.prototype.slice.call(arguments);
+    table.unshift(this);
+    return Array.unzip(table);
+}
+
+GenericCollection.prototype.join = function (delimiter) {
+    return this.reduce(function (result, string) {
+        // work-around for reduce that does not support no-basis form
+        if (result === void 0) {
+            return string;
+        } else {
+            return result + delimiter + string;
+        }
+    }, void 0);
+};
+
+GenericCollection.prototype.sorted = function (compare, by, order) {
+    compare = compare || this.contentCompare || Object.compare;
+    // account for comparators generated by Function.by
+    if (compare.by) {
+        by = compare.by;
+        compare = compare.compare || this.contentCompare || Object.compare;
+    } else {
+        by = by || Function.identity;
+    }
+    if (order === undefined)
+        order = 1;
+    return this.map(function (item) {
+        return {
+            by: by(item),
+            value: item
+        };
+    })
+    .sort(function (a, b) {
+        return compare(a.by, b.by) * order;
+    })
+    .map(function (pair) {
+        return pair.value;
+    });
+};
+
+GenericCollection.prototype.reversed = function () {
+    return this.constructClone(this).reverse();
+};
+
+GenericCollection.prototype.clone = function (depth, memo) {
+    if (depth === undefined) {
+        depth = Infinity;
+    } else if (depth === 0) {
+        return this;
+    }
+    var clone = this.constructClone();
+    this.forEach(function (value, key) {
+        clone.add(Object.clone(value, depth - 1, memo), key);
+    }, this);
+    return clone;
+};
+
+GenericCollection.prototype.only = function () {
+    if (this.length === 1) {
+        return this.one();
+    }
+};
+
+GenericCollection.prototype.iterator = function () {
+    return this.iterate.apply(this, arguments);
+};
+
+GenericCollection._sizePropertyDescriptor = {
+    get: function() {
+        return this.length;
+    },
+    enumerable: false,
+    configurable: true
+};
+
+Object.defineProperty(GenericCollection.prototype,"size",GenericCollection._sizePropertyDescriptor);
+
+__webpack_require__(8475);
+
+
+/***/ }),
+
+/***/ 2049:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+var Object = __webpack_require__(5138);
+var Iterator = __webpack_require__(6387);
+
+module.exports = GenericMap;
+function GenericMap() {
+    throw new Error("Can't construct. GenericMap is a mixin.");
+}
+
+// all of these methods depend on the constructor providing a `store` set
+
+GenericMap.prototype.isMap = true;
+
+GenericMap.prototype.addEach = function (values) {
+    var i;
+    if (values && Object(values) === values) {
+        if (typeof values.forEach === "function") {
+            // copy map-alikes
+            if (values.isMap === true) {
+                values.forEach(function (value, key) {
+                    this.set(key, value);
+                }, this);
+            // iterate key value pairs of other iterables
+            } else {
+                values.forEach(function (pair) {
+                    this.set(pair[0], pair[1]);
+                }, this);
+            }
+        } else if (typeof values.length === "number") {
+            // Array-like objects that do not implement forEach, ergo,
+            // Arguments
+            for (i = 0; i < values.length; i++) {
+                this.add(values[i], i);
+            }
+        } else {
+            // copy other objects as map-alikes
+            Object.keys(values).forEach(function (key) {
+                this.set(key, values[key]);
+            }, this);
+        }
+    } else if (values && typeof values.length === "number") {
+        // String
+        for (i = 0; i < values.length; i++) {
+            this.add(values[i], i);
+        }
+    }
+    return this;
+};
+
+GenericMap.prototype.get = function (key, defaultValue) {
+    var item = this.store.get(new this.Item(key));
+    if (item) {
+        return item.value;
+    } else if (arguments.length > 1) {
+        console.log("Use of a second argument as default value is deprecated to match standards");
+        return defaultValue;
+    } else {
+        return this.getDefault(key);
+    }
+};
+
+GenericMap.prototype.set = function (key, value) {
+    var item = new this.Item(key, value);
+    var found = this.store.get(item);
+    var grew = false;
+    if (found) { // update
+        if (this.dispatchesMapChanges) {
+            this.dispatchBeforeMapChange(key, found.value);
+        }
+        found.value = value;
+        if (this.dispatchesMapChanges) {
+            this.dispatchMapChange(key, value);
+        }
+    } else { // create
+        if (this.dispatchesMapChanges) {
+            this.dispatchBeforeMapChange(key, undefined);
+        }
+        if (this.store.add(item)) {
+            this.length++;
+            grew = true;
+        }
+        if (this.dispatchesMapChanges) {
+            this.dispatchMapChange(key, value);
+        }
+    }
+    return this;
+};
+
+GenericMap.prototype.add = function (value, key) {
+    return this.set(key, value);
+};
+
+GenericMap.prototype.has = function (key) {
+    return this.store.has(new this.Item(key));
+};
+
+GenericMap.prototype['delete'] = function (key) {
+    var item = new this.Item(key);
+    if (this.store.has(item)) {
+        var from = this.store.get(item).value;
+        if (this.dispatchesMapChanges) {
+            this.dispatchBeforeMapChange(key, from);
+        }
+        this.store["delete"](item);
+        this.length--;
+        if (this.dispatchesMapChanges) {
+            this.dispatchMapChange(key, undefined);
+        }
+        return true;
+    }
+    return false;
+};
+
+GenericMap.prototype.clear = function () {
+    var keys, key;
+    if (this.dispatchesMapChanges) {
+        this.forEach(function (value, key) {
+            this.dispatchBeforeMapChange(key, value);
+        }, this);
+        keys = this.keysArray();
+    }
+    this.store.clear();
+    this.length = 0;
+    if (this.dispatchesMapChanges) {
+        for(var i=0;(key = keys[i]);i++) {
+            this.dispatchMapChange(key);
+        }
+        // keys.forEach(function (key) {
+        //     this.dispatchMapChange(key);
+        // }, this);
+    }
+};
+
+GenericMap.prototype.reduce = function (callback, basis, thisp) {
+    return this.store.reduce(function (basis, item) {
+        return callback.call(thisp, basis, item.value, item.key, this);
+    }, basis, this);
+};
+
+GenericMap.prototype.reduceRight = function (callback, basis, thisp) {
+    return this.store.reduceRight(function (basis, item) {
+        return callback.call(thisp, basis, item.value, item.key, this);
+    }, basis, this);
+};
+
+GenericMap.prototype.keysArray = function () {
+    return this.map(function (value, key) {
+        return key;
+    });
+};
+GenericMap.prototype.keys = function () {
+    return new Iterator(this.keysArray(), true);
+};
+
+GenericMap.prototype.valuesArray = function () {
+    return this.map(Function.identity);
+};
+GenericMap.prototype.values = function () {
+    return new Iterator(this.valuesArray(), true);
+};
+
+GenericMap.prototype.entriesArray = function () {
+    return this.map(function (value, key) {
+        return [key, value];
+    });
+};
+GenericMap.prototype.entries = function () {
+    return new Iterator(this.entriesArray(), true);
+};
+
+// XXX deprecated
+GenericMap.prototype.items = function () {
+    return this.entriesArray();
+};
+
+GenericMap.prototype.equals = function (that, equals) {
+    equals = equals || Object.equals;
+    if (this === that) {
+        return true;
+    } else if (that && typeof that.every === "function") {
+        return that.length === this.length && that.every(function (value, key) {
+            return equals(this.get(key), value);
+        }, this);
+    } else {
+        var keys = Object.keys(that);
+        return keys.length === this.length && Object.keys(that).every(function (key) {
+            return equals(this.get(key), that[key]);
+        }, this);
+    }
+};
+
+GenericMap.prototype.toJSON = function () {
+    return this.entriesArray();
+};
+
+
+GenericMap.prototype.Item = Item;
+
+function Item(key, value) {
+    this.key = key;
+    this.value = value;
+}
+
+Item.prototype.equals = function (that) {
+    return Object.equals(this.key, that.key) && Object.equals(this.value, that.value);
+};
+
+Item.prototype.compare = function (that) {
+    return Object.compare(this.key, that.key);
+};
+
+
+/***/ }),
+
+/***/ 1650:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+
+var Object = __webpack_require__(5138);
+
+module.exports = GenericOrder;
+function GenericOrder() {
+    throw new Error("Can't construct. GenericOrder is a mixin.");
+}
+
+GenericOrder.prototype.equals = function (that, equals) {
+    equals = equals || this.contentEquals || Object.equals;
+
+    if (this === that) {
+        return true;
+    }
+    if (!that) {
+        return false;
+    }
+
+    var self = this;
+    return (
+        this.length === that.length &&
+        this.zip(that).every(function (pair) {
+            return equals(pair[0], pair[1]);
+        })
+    );
+};
+
+GenericOrder.prototype.compare = function (that, compare) {
+    compare = compare || this.contentCompare || Object.compare;
+
+    if (this === that) {
+        return 0;
+    }
+    if (!that) {
+        return 1;
+    }
+
+    var length = Math.min(this.length, that.length);
+    var comparison = this.zip(that).reduce(function (comparison, pair, index) {
+        if (comparison === 0) {
+            if (index >= length) {
+                return comparison;
+            } else {
+                return compare(pair[0], pair[1]);
+            }
+        } else {
+            return comparison;
+        }
+    }, 0);
+    if (comparison === 0) {
+        return this.length - that.length;
+    }
+    return comparison;
+};
+
+GenericOrder.prototype.toJSON = function () {
+    return this.toArray();
+};
+
+
+/***/ }),
+
+/***/ 9918:
+/***/ ((module) => {
+
+
+module.exports = GenericSet;
+function GenericSet() {
+    throw new Error("Can't construct. GenericSet is a mixin.");
+}
+
+GenericSet.prototype.isSet = true;
+
+GenericSet.prototype.union = function (that) {
+    var union =  this.constructClone(this);
+    union.addEach(that);
+    return union;
+};
+
+GenericSet.prototype.intersection = function (that) {
+    return this.constructClone(this.filter(function (value) {
+        return that.has(value);
+    }));
+};
+
+GenericSet.prototype.difference = function (that) {
+    var union =  this.constructClone(this);
+    union.deleteEach(that);
+    return union;
+};
+
+GenericSet.prototype.symmetricDifference = function (that) {
+    var union = this.union(that);
+    var intersection = this.intersection(that);
+    return union.difference(intersection);
+};
+
+GenericSet.prototype.deleteAll = function (value) {
+    // deleteAll is equivalent to delete for sets since they guarantee that
+    // only one value exists for an equivalence class, but deleteAll returns
+    // the count of deleted values instead of whether a value was deleted.
+    return +this["delete"](value);
+};
+
+GenericSet.prototype.equals = function (that, equals) {
+    var self = this;
+    return (
+        that && typeof that.reduce === "function" &&
+        this.length === that.length &&
+        that.reduce(function (equal, value) {
+            return equal && self.has(value, equals);
+        }, true)
+    );
+};
+
+GenericSet.prototype.forEach = function (callback /*, thisp*/) {
+    var thisp = arguments[1];
+    return this.reduce(function (undefined, value, key, object, depth) {
+        //ECMASCRIPT Sets send value twice in callback to forEach
+        callback.call(thisp, value, value, object, depth);
+    }, undefined);
+};
+
+
+GenericSet.prototype.toJSON = function () {
+    return this.toArray();
+};
+
+// W3C DOMTokenList API overlap (does not handle variadic arguments)
+
+GenericSet.prototype.contains = function (value) {
+    return this.has(value);
+};
+
+GenericSet.prototype.remove = function (value) {
+    return this["delete"](value);
+};
+
+GenericSet.prototype.toggle = function (value) {
+    if (this.has(value)) {
+        this["delete"](value);
+    } else {
+        this.add(value);
+    }
+};
+
+var _valuesArrayFunction = function(value,key) {return value;};
+GenericSet.prototype.valuesArray = function() {
+    return this.map(_valuesArrayFunction);
+}
+var _entriesArrayFunction = function(value,key) {return [key,value];};
+GenericSet.prototype.entriesArray = function() {
+    return this.map(_entriesArrayFunction);
+}
+
+
+/***/ }),
+
+/***/ 6387:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+module.exports = Iterator;
+
+var Object = __webpack_require__(5138);
+var GenericCollection = __webpack_require__(8488);
+
+// upgrades an iterable to a Iterator
+function Iterator(iterable, standardMode) {
+
+    /*
+        standardMode should be passed as true by a collection that uses Iterator
+        to provide a polyfill of standard iterations methods like entries() and values(),
+        as Collection's iterator behaves differently than standards ones when it comes to sparse arrays.
+        without passing standardMode, new Iterator instances will behave as intended independently of standards.
+    */
+    var values = standardMode && iterable && iterable.values && iterable.values();
+    if(values && typeof values.next === "function" ) {
+        return values;
+    }
+
+    if (!(this instanceof Iterator)) {
+        return new Iterator(iterable);
+    }
+
+    if (Array.isArray(iterable) || typeof iterable === "string")
+        return Iterator.iterate(iterable);
+
+    iterable = Object(iterable);
+
+    if (iterable instanceof Iterator) {
+        return iterable;
+    } else if (iterable.next) {
+        this.next = function () {
+            return iterable.next();
+        };
+    } else if (iterable.iterate) {
+        var iterator = iterable.iterate();
+        this.next = function () {
+            return iterator.next();
+        };
+    } else if (Object.prototype.toString.call(iterable) === "[object Function]") {
+        this.next = iterable;
+    } else {
+        throw new TypeError("Can't iterate " + iterable);
+    }
+
+}
+
+Iterator.prototype.forEach = GenericCollection.prototype.forEach;
+Iterator.prototype.map = GenericCollection.prototype.map;
+Iterator.prototype.filter = GenericCollection.prototype.filter;
+Iterator.prototype.every = GenericCollection.prototype.every;
+Iterator.prototype.some = GenericCollection.prototype.some;
+Iterator.prototype.any = GenericCollection.prototype.any;
+Iterator.prototype.all = GenericCollection.prototype.all;
+Iterator.prototype.min = GenericCollection.prototype.min;
+Iterator.prototype.max = GenericCollection.prototype.max;
+Iterator.prototype.sum = GenericCollection.prototype.sum;
+Iterator.prototype.average = GenericCollection.prototype.average;
+Iterator.prototype.flatten = GenericCollection.prototype.flatten;
+Iterator.prototype.zip = GenericCollection.prototype.zip;
+Iterator.prototype.enumerate = GenericCollection.prototype.enumerate;
+Iterator.prototype.sorted = GenericCollection.prototype.sorted;
+Iterator.prototype.group = GenericCollection.prototype.group;
+Iterator.prototype.reversed = GenericCollection.prototype.reversed;
+Iterator.prototype.toArray = GenericCollection.prototype.toArray;
+Iterator.prototype.toObject = GenericCollection.prototype.toObject;
+Iterator.prototype.iterator = GenericCollection.prototype.iterator;
+
+Iterator.prototype.__iterationObject = null;
+Object.defineProperty(Iterator.prototype,"_iterationObject", {
+    get: function() {
+        return this.__iterationObject || (this.__iterationObject = { done: false, value:void 0});
+    }
+});
+
+
+// this is a bit of a cheat so flatten and such work with the generic
+// reducible
+Iterator.prototype.constructClone = function (values) {
+    var clone = [];
+    clone.addEach(values);
+    return clone;
+};
+
+Iterator.prototype.mapIterator = function (callback /*, thisp*/) {
+    var self = Iterator(this),
+        thisp = arguments[1],
+        i = 0;
+
+    if (Object.prototype.toString.call(callback) != "[object Function]")
+        throw new TypeError();
+
+    return new self.constructor(function () {
+        if(self._iterationObject.done !== true) {
+            var callbackValue = callback.call(thisp, self.next().value, i++, self);
+            self._iterationObject.value = callbackValue;
+        }
+        return self._iterationObject;
+    });
+};
+
+Iterator.prototype.filterIterator = function (callback /*, thisp*/) {
+    var self = Iterator(this),
+        thisp = arguments[1],
+        i = 0;
+
+    if (Object.prototype.toString.call(callback) != "[object Function]")
+        throw new TypeError();
+
+    return new self.constructor(function () {
+        var nextEntry;
+        while (true) {
+            nextEntry = self.next();
+            if(nextEntry.done !== true) {
+                if (callback.call(thisp, nextEntry.value, i++, self))
+                    return nextEntry;
+            }
+            else {
+                //done true and value undefined at this point
+                return nextEntry;
+            }
+        }
+    });
+};
+
+Iterator.prototype.reduce = function (callback /*, initial, thisp*/) {
+    var self = Iterator(this),
+        result = arguments[1],
+        thisp = arguments[2],
+        i = 0,
+        nextEntry;
+
+    if (Object.prototype.toString.call(callback) != "[object Function]")
+        throw new TypeError();
+
+    // first iteration unrolled
+    nextEntry = self.next();
+    if(nextEntry.done === true) {
+        if (arguments.length > 1) {
+            return arguments[1]; // initial
+        } else {
+            throw TypeError("cannot reduce a value from an empty iterator with no initial value");
+        }
+    }
+    if (arguments.length > 1) {
+        result = callback.call(thisp, result, nextEntry.value, i, self);
+    } else {
+        result = nextEntry.value;
+    }
+    i++;
+    // remaining entries
+    while (true) {
+        nextEntry = self.next();
+        if(nextEntry.done === true) {
+            return result;
+        }
+        result = callback.call(thisp, result, nextEntry.value, i, self);
+        i++;
+    }
+
+};
+
+Iterator.prototype.concat = function () {
+    return Iterator.concat(
+        Array.prototype.concat.apply(this, arguments)
+    );
+};
+
+Iterator.prototype.dropWhile = function (callback /*, thisp */) {
+    var self = Iterator(this),
+        thisp = arguments[1],
+        stopped = false,
+        stopValue,
+        nextEntry,
+        i = 0;
+
+    if (Object.prototype.toString.call(callback) != "[object Function]")
+        throw new TypeError();
+
+    while (true) {
+        nextEntry = self.next();
+        if(nextEntry.done === true) {
+            break;
+        }
+        if (!callback.call(thisp, nextEntry.value, i, self)) {
+            stopped = true;
+            stopValue = nextEntry.value;
+            break;
+        }
+        i++;
+    }
+
+    if (stopped) {
+        return self.constructor([stopValue]).concat(self);
+    } else {
+        return self.constructor([]);
+    }
+};
+
+Iterator.prototype.takeWhile = function (callback /*, thisp*/) {
+    var self = Iterator(this),
+        thisp = arguments[1],
+        nextEntry,
+        i = 0;
+
+    if (Object.prototype.toString.call(callback) != "[object Function]")
+        throw new TypeError();
+
+    return new self.constructor(function () {
+        if(self._iterationObject.done !== true) {
+            var value = self.next().value;
+            if(callback.call(thisp, value, i++, self)) {
+                self._iterationObject.value = value;
+            }
+            else {
+                self._iterationObject.done = true;
+                self._iterationObject.value = void 0;
+            }
+        }
+        return self._iterationObject;
+    });
+
+};
+
+Iterator.prototype.zipIterator = function () {
+    return Iterator.unzip(
+        Array.prototype.concat.apply(this, arguments)
+    );
+};
+
+Iterator.prototype.enumerateIterator = function (start) {
+    return Iterator.count(start).zipIterator(this);
+};
+
+// creates an iterator for Array and String
+Iterator.iterate = function (iterable) {
+    var start;
+    start = 0;
+    return new Iterator(function () {
+        // advance to next owned entry
+        if (typeof iterable === "object") {
+            while (!(start in iterable)) {
+                // deliberately late bound
+                if (start >= iterable.length) {
+                    this._iterationObject.done = true;
+                    this._iterationObject.value = void 0;
+                    break;
+                }
+                else start += 1;
+            }
+        } else if (start >= iterable.length) {
+            this._iterationObject.done = true;
+            this._iterationObject.value = void 0;
+        }
+
+        if(!this._iterationObject.done) {
+            this._iterationObject.value = iterable[start];
+            start += 1;
+        }
+        return this._iterationObject;
+    });
+};
+
+Iterator.cycle = function (cycle, times) {
+    var next;
+    if (arguments.length < 2)
+        times = Infinity;
+    //cycle = Iterator(cycle).toArray();
+    return new Iterator(function () {
+        var iteration, nextEntry;
+
+        if(next) {
+            nextEntry = next();
+        }
+
+        if(!next || nextEntry.done === true) {
+            if (times > 0) {
+                times--;
+                iteration = Iterator.iterate(cycle);
+                nextEntry = (next = iteration.next.bind(iteration))();
+            }
+            else {
+                this._iterationObject.done = true;
+                nextEntry = this._iterationObject;            }
+        }
+        return nextEntry;
+    });
+};
+
+Iterator.concat = function (iterators) {
+    iterators = Iterator(iterators);
+    var next;
+    return new Iterator(function (){
+        var iteration, nextEntry;
+        if(next) nextEntry = next();
+        if(!nextEntry || nextEntry.done === true) {
+            nextEntry = iterators.next();
+            if(nextEntry.done === false) {
+                iteration = Iterator(nextEntry.value);
+                next = iteration.next.bind(iteration);
+                return next();
+            }
+            else {
+                return nextEntry;
+            }
+        }
+        else return nextEntry;
+    });
+};
+
+Iterator.unzip = function (iterators) {
+    iterators = Iterator(iterators).map(Iterator);
+    if (iterators.length === 0)
+        return new Iterator([]);
+    return new Iterator(function () {
+        var stopped, nextEntry;
+        var result = iterators.map(function (iterator) {
+            nextEntry = iterator.next();
+            if (nextEntry.done === true ) {
+                stopped = true;
+            }
+            return nextEntry.value;
+        });
+        if (stopped) {
+            this._iterationObject.done = true;
+            this._iterationObject.value = void 0;
+        }
+        else {
+            this._iterationObject.value = result;
+        }
+        return this._iterationObject;
+    });
+};
+
+Iterator.zip = function () {
+    return Iterator.unzip(
+        Array.prototype.slice.call(arguments)
+    );
+};
+
+Iterator.chain = function () {
+    return Iterator.concat(
+        Array.prototype.slice.call(arguments)
+    );
+};
+
+Iterator.range = function (start, stop, step) {
+    if (arguments.length < 3) {
+        step = 1;
+    }
+    if (arguments.length < 2) {
+        stop = start;
+        start = 0;
+    }
+    start = start || 0;
+    step = step || 1;
+    return new Iterator(function () {
+        if (start >= stop) {
+            this._iterationObject.done = true;
+            this._iterationObject.value = void 0;
+        }
+        var result = start;
+        start += step;
+        this._iterationObject.value = result;
+
+        return this._iterationObject;
+    });
+};
+
+Iterator.count = function (start, step) {
+    return Iterator.range(start, Infinity, step);
+};
+
+Iterator.repeat = function (value, times) {
+    return new Iterator.range(times).mapIterator(function () {
+        return value;
+    });
+};
+
+
+/***/ }),
+
+/***/ 375:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+/*
+    Copyright (c) 2016, Montage Studio Inc. All Rights Reserved.
+    3-Clause BSD License
+    https://github.com/montagejs/montage/blob/master/LICENSE.md
+*/
+
+var Map = __webpack_require__(4410);
+
+var ObjectChangeDescriptor = module.exports.ObjectChangeDescriptor = function ObjectChangeDescriptor(name) {
+    this.name = name;
+    this.isActive = false;
+    this._willChangeListeners = null;
+    this._changeListeners = null;
+	return this;
+}
+
+Object.defineProperties(ObjectChangeDescriptor.prototype,{
+    name: {
+		value:null,
+		writable: true
+	},
+    isActive: {
+		value:false,
+		writable: true
+	},
+	_willChangeListeners: {
+		value:null,
+		writable: true
+	},
+	willChangeListeners: {
+		get: function() {
+			return this._willChangeListeners || (this._willChangeListeners = new this.willChangeListenersRecordConstructor(this.name));
+		}
+	},
+	_changeListeners: {
+		value:null,
+		writable: true
+	},
+    changeListeners: {
+		get: function() {
+			return this._changeListeners || (this._changeListeners = new this.changeListenersRecordConstructor(this.name));
+		}
+	},
+    changeListenersRecordConstructor: {
+        value: ChangeListenersRecord,
+        writable: true
+    },
+    willChangeListenersRecordConstructor: {
+        value: WillChangeListenersRecord,
+        writable: true
+    }
+
+});
+
+var ListenerGhost = module.exports.ListenerGhost = Object.create(null);
+var ChangeListenerSpecificHandlerMethodName = new Map();
+
+ module.exports.ChangeListenersRecord = ChangeListenersRecord;
+function ChangeListenersRecord(name) {
+    var specificHandlerMethodName = ChangeListenerSpecificHandlerMethodName.get(name);
+    if(!specificHandlerMethodName) {
+        specificHandlerMethodName = "handle";
+        specificHandlerMethodName += name;
+        specificHandlerMethodName += "Change";
+        ChangeListenerSpecificHandlerMethodName.set(name,specificHandlerMethodName);
+    }
+    this._current = null;
+    this._current = null;
+    this.specificHandlerMethodName = specificHandlerMethodName;
+    return this;
+}
+
+Object.defineProperties(ChangeListenersRecord.prototype,{
+    _current: {
+		value: null,
+		writable: true
+	},
+	current: {
+		get: function() {
+            // if(this._current) {
+            //     console.log(this.constructor.name," with ",this._current.length," listeners: ", this._current);
+            // }
+            return this._current;
+            //return this._current || (this._current = []);
+		},
+        set: function(value) {
+            this._current = value;
+        }
+	},
+    ListenerGhost: {
+        value:ListenerGhost,
+        writable: true
+    },
+    ghostCount: {
+        value:0,
+        writable: true
+    },
+    maxListenerGhostRatio: {
+        value:0.3,
+        writable: true
+    },
+    listenerGhostFilter: {
+        value: function listenerGhostFilter(value) {
+          return value !== this.ListenerGhost;
+      }
+    },
+    removeCurrentGostListenersIfNeeded: {
+        value: function() {
+            if(this._current && this.ghostCount/this._current.length>this.maxListenerGhostRatio) {
+                this.ghostCount = 0;
+                this._current = this._current.filter(this.listenerGhostFilter,this);
+            }
+            return this._current;
+        }
+    },
+    dispatchBeforeChange: {
+        value: false,
+        writable: true
+    },
+    genericHandlerMethodName: {
+		value: "handlePropertyChange",
+        writable: true
+	}
+});
+
+module.exports.WillChangeListenersRecord = WillChangeListenersRecord;
+var WillChangeListenerSpecificHandlerMethodName = new Map();
+function WillChangeListenersRecord(name) {
+    var specificHandlerMethodName = WillChangeListenerSpecificHandlerMethodName.get(name);
+    if(!specificHandlerMethodName) {
+        specificHandlerMethodName = "handle";
+        specificHandlerMethodName += name;
+        specificHandlerMethodName += "WillChange";
+        WillChangeListenerSpecificHandlerMethodName.set(name,specificHandlerMethodName);
+    }
+    this.specificHandlerMethodName = specificHandlerMethodName;
+	return this;
+}
+WillChangeListenersRecord.prototype = new ChangeListenersRecord();
+WillChangeListenersRecord.prototype.constructor = WillChangeListenersRecord;
+WillChangeListenersRecord.prototype.genericHandlerMethodName = "handlePropertyWillChange";
+
+
+/***/ }),
+
+/***/ 1843:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+//TODO:
+// Remove Dict and use native Map as much as possible here
+//Use ObjectChangeDescriptor to avoid creating useless arrays and benefit from similar gains made in property-changes
+
+
+var WeakMap = __webpack_require__(491),
+    Map = __webpack_require__(4410),
+    ChangeDescriptor = __webpack_require__(375),
+    ObjectChangeDescriptor = ChangeDescriptor.ObjectChangeDescriptor,
+    ChangeListenersRecord = ChangeDescriptor.ChangeListenersRecord,
+    ListenerGhost = ChangeDescriptor.ListenerGhost;
+
+var rangeChangeDescriptors = new WeakMap(); // {isActive, willChangeListeners, changeListeners}
+
+
+//
+function RangeChangeDescriptor(name) {
+    this.name = name;
+    this.isActive = false;
+    this._willChangeListeners = null;
+    this._changeListeners = null;
+};
+
+RangeChangeDescriptor.prototype = new ObjectChangeDescriptor();
+RangeChangeDescriptor.prototype.constructor = RangeChangeDescriptor;
+
+RangeChangeDescriptor.prototype.changeListenersRecordConstructor = RangeChangeListenersRecord;
+RangeChangeDescriptor.prototype.willChangeListenersRecordConstructor = RangeWillChangeListenersRecord;
+Object.defineProperty(RangeChangeDescriptor.prototype,"active",{
+    get: function() {
+        return this._active || (this._active = this._current ? this._current.slice():[]);
+    }
+});
+
+
+var RangeChangeListenersSpecificHandlerMethodName = new Map();
+
+function RangeChangeListenersRecord(name) {
+    var specificHandlerMethodName = RangeChangeListenersSpecificHandlerMethodName.get(name);
+    if(!specificHandlerMethodName) {
+        specificHandlerMethodName = "handle";
+        specificHandlerMethodName += name.slice(0, 1).toUpperCase();
+        specificHandlerMethodName += name.slice(1);
+        specificHandlerMethodName += "RangeChange";
+        RangeChangeListenersSpecificHandlerMethodName.set(name,specificHandlerMethodName);
+    }
+    this.specificHandlerMethodName = specificHandlerMethodName;
+	return this;
+}
+RangeChangeListenersRecord.prototype = new ChangeListenersRecord();
+RangeChangeListenersRecord.prototype.constructor = RangeChangeListenersRecord;
+
+var RangeWillChangeListenersSpecificHandlerMethodName = new Map();
+
+function RangeWillChangeListenersRecord(name) {
+    var specificHandlerMethodName = RangeWillChangeListenersSpecificHandlerMethodName.get(name);
+    if(!specificHandlerMethodName) {
+        specificHandlerMethodName = "handle";
+        specificHandlerMethodName += name.slice(0, 1).toUpperCase();
+        specificHandlerMethodName += name.slice(1);
+        specificHandlerMethodName += "RangeWillChange";
+        RangeWillChangeListenersSpecificHandlerMethodName.set(name,specificHandlerMethodName);
+    }
+    this.specificHandlerMethodName = specificHandlerMethodName;
+    return this;
+}
+RangeWillChangeListenersRecord.prototype = new ChangeListenersRecord();
+RangeWillChangeListenersRecord.prototype.constructor = RangeWillChangeListenersRecord;
+
+module.exports = RangeChanges;
+function RangeChanges() {
+    throw new Error("Can't construct. RangeChanges is a mixin.");
+}
+
+RangeChanges.prototype.getAllRangeChangeDescriptors = function () {
+    if (!rangeChangeDescriptors.has(this)) {
+        rangeChangeDescriptors.set(this, new Map());
+    }
+    return rangeChangeDescriptors.get(this);
+};
+
+RangeChanges.prototype.getRangeChangeDescriptor = function (token) {
+    var tokenChangeDescriptors = this.getAllRangeChangeDescriptors();
+    token = token || "";
+    if (!tokenChangeDescriptors.has(token)) {
+        tokenChangeDescriptors.set(token, new RangeChangeDescriptor(token));
+    }
+    return tokenChangeDescriptors.get(token);
+};
+
+var ObjectsDispatchesRangeChanges = new WeakMap(),
+    dispatchesRangeChangesGetter = function() {
+        return ObjectsDispatchesRangeChanges.get(this);
+    },
+    dispatchesRangeChangesSetter = function(value) {
+        return ObjectsDispatchesRangeChanges.set(this,value);
+    },
+    dispatchesChangesMethodName = "dispatchesRangeChanges",
+    dispatchesChangesPropertyDescriptor = {
+        get: dispatchesRangeChangesGetter,
+        set: dispatchesRangeChangesSetter,
+        configurable: true,
+        enumerable: false
+    };
+
+RangeChanges.prototype.addRangeChangeListener = function addRangeChangeListener(listener, token, beforeChange) {
+    // a concession for objects like Array that are not inherently observable
+    if (!this.isObservable && this.makeObservable) {
+        this.makeObservable();
+    }
+
+    var descriptor = this.getRangeChangeDescriptor(token);
+
+    var listeners;
+    if (beforeChange) {
+        listeners = descriptor.willChangeListeners;
+    } else {
+        listeners = descriptor.changeListeners;
+    }
+
+    // even if already registered
+    if(!listeners._current) {
+        listeners._current = listener;
+    }
+    else if(!Array.isArray(listeners._current)) {
+        listeners._current = [listeners._current,listener]
+    }
+    else {
+        listeners._current.push(listener);
+    }
+
+    if(Object.getOwnPropertyDescriptor((this.__proto__||Object.getPrototypeOf(this)),dispatchesChangesMethodName) === void 0) {
+        Object.defineProperty((this.__proto__||Object.getPrototypeOf(this)), dispatchesChangesMethodName, dispatchesChangesPropertyDescriptor);
+    }
+    this.dispatchesRangeChanges = true;
+
+    var self = this;
+    return function cancelRangeChangeListener() {
+        if (!self) {
+            // TODO throw new Error("Range change listener " + JSON.stringify(token) + " has already been canceled");
+            return;
+        }
+        self.removeRangeChangeListener(listener, token, beforeChange);
+        self = null;
+    };
+};
+
+
+RangeChanges.prototype.removeRangeChangeListener = function (listener, token, beforeChange) {
+    var descriptor = this.getRangeChangeDescriptor(token);
+
+    var listeners;
+    if (beforeChange) {
+        listeners = descriptor._willChangeListeners;
+    } else {
+        listeners = descriptor._changeListeners;
+    }
+
+    if(listeners._current) {
+        if(listeners._current === listener) {
+            listeners._current = null;
+        }
+        else {
+            var index = listeners._current.lastIndexOf(listener);
+            if (index === -1) {
+                throw new Error("Can't remove range change listener: does not exist: token " + JSON.stringify(token));
+            }
+            else {
+                if(descriptor.isActive) {
+                    listeners.ghostCount = listeners.ghostCount+1
+                    listeners._current[index]=ListenerGhost
+                }
+                else {
+                    listeners._current.spliceOne(index);
+                }
+            }
+        }
+    }
+
+};
+
+RangeChanges.prototype.dispatchRangeChange = function (plus, minus, index, beforeChange) {
+    var descriptors = this.getAllRangeChangeDescriptors(),
+        descriptor,
+        mapIter  = descriptors.values(),
+        listeners,
+        tokenName,
+        i,
+        countI,
+        listener,
+        currentListeners,
+        Ghost;
+
+    descriptors.dispatchBeforeChange = beforeChange;
+
+     while (descriptor = mapIter.next().value) {
+
+        if (descriptor.isActive) {
+            return;
+        }
+
+        // before or after
+        listeners = beforeChange ? descriptor._willChangeListeners : descriptor._changeListeners;
+        if(listeners && listeners._current) {
+            tokenName = listeners.specificHandlerMethodName;
+            if(Array.isArray(listeners._current)) {
+                if(listeners._current.length) {
+                    // notably, defaults to "handleRangeChange" or "handleRangeWillChange"
+                    // if token is "" (the default)
+
+                    descriptor.isActive = true;
+                    // dispatch each listener
+                    try {
+                            //removeGostListenersIfNeeded returns listeners.current or a new filtered one when conditions are met
+                            currentListeners = listeners.removeCurrentGostListenersIfNeeded();
+                            Ghost = ListenerGhost;
+                        for(i=0, countI = currentListeners.length;i<countI;i++) {
+                            if ((listener = currentListeners[i]) !== Ghost) {
+                                if (listener[tokenName]) {
+                                    listener[tokenName](plus, minus, index, this, beforeChange);
+                                } else if (listener.call) {
+                                    listener.call(this, plus, minus, index, this, beforeChange);
+                                } else {
+                                    throw new Error("Handler " + listener + " has no method " + tokenName + " and is not callable");
+                                }
+                            }
+                        }
+                    } finally {
+                        descriptor.isActive = false;
+                    }
+                }
+            }
+            else {
+                descriptor.isActive = true;
+                // dispatch each listener
+                try {
+                    listener = listeners._current;
+                    if (listener[tokenName]) {
+                        listener[tokenName](plus, minus, index, this, beforeChange);
+                    } else if (listener.call) {
+                        listener.call(this, plus, minus, index, this, beforeChange);
+                    } else {
+                        throw new Error("Handler " + listener + " has no method " + tokenName + " and is not callable");
+                    }
+                } finally {
+                    descriptor.isActive = false;
+                }
+
+            }
+        }
+
+    }
+};
+
+RangeChanges.prototype.addBeforeRangeChangeListener = function (listener, token) {
+    return this.addRangeChangeListener(listener, token, true);
+};
+
+RangeChanges.prototype.removeBeforeRangeChangeListener = function (listener, token) {
+    return this.removeRangeChangeListener(listener, token, true);
+};
+
+RangeChanges.prototype.dispatchBeforeRangeChange = function (plus, minus, index) {
+    return this.dispatchRangeChange(plus, minus, index, true);
+};
+
+
+/***/ }),
+
+/***/ 8475:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+/*
+    Based in part on extras from Motorola Mobility’s Montage
+    Copyright (c) 2012, Motorola Mobility LLC. All Rights Reserved.
+    3-Clause BSD License
+    https://github.com/motorola-mobility/montage/blob/master/LICENSE.md
+*/
+
+var Function = __webpack_require__(1381);
+var GenericCollection = __webpack_require__(8488);
+var GenericOrder = __webpack_require__(1650);
+var WeakMap = __webpack_require__(491);
+
+module.exports = Array;
+
+var array_splice = Array.prototype.splice;
+var array_slice = Array.prototype.slice;
+
+Array.empty = [];
+
+if (Object.freeze) {
+    Object.freeze(Array.empty);
+}
+
+Array.nativeFrom = Array.from;
+
+var isSymbolDefined = typeof Symbol !== "undefined";
+Array.from = function (values, mapFn, thisArg) {
+    if(isSymbolDefined && values && (typeof values[Symbol.iterator] === "function" || typeof mapFn === "function")) {
+        return Array.nativeFrom(values, mapFn, thisArg);
+    }
+    //Now we add support for values that implement forEach:
+    var array = [];
+    array.addEach(values);
+    return array;
+};
+
+Array.unzip = function (table) {
+    var transpose = [];
+    var length = Infinity;
+    // compute shortest row
+    for (var i = 0; i < table.length; i++) {
+        var row = table[i];
+        table[i] = row.toArray();
+        if (row.length < length) {
+            length = row.length;
+        }
+    }
+    for (var i = 0; i < table.length; i++) {
+        var row = table[i];
+        for (var j = 0; j < row.length; j++) {
+            if (j < length && j in row) {
+                transpose[j] = transpose[j] || [];
+                transpose[j][i] = row[j];
+            }
+        }
+    }
+    return transpose;
+};
+
+function define(key, value) {
+    Object.defineProperty(Array.prototype, key, {
+        value: value,
+        writable: true,
+        configurable: true,
+        enumerable: false
+    });
+}
+
+define("addEach", GenericCollection.prototype.addEach);
+define("deleteEach", GenericCollection.prototype.deleteEach);
+define("toArray", GenericCollection.prototype.toArray);
+define("toObject", GenericCollection.prototype.toObject);
+define("all", GenericCollection.prototype.all);
+define("any", GenericCollection.prototype.any);
+define("min", GenericCollection.prototype.min);
+define("max", GenericCollection.prototype.max);
+define("sum", GenericCollection.prototype.sum);
+define("average", GenericCollection.prototype.average);
+define("only", GenericCollection.prototype.only);
+define("flatten", GenericCollection.prototype.flatten);
+define("zip", GenericCollection.prototype.zip);
+define("enumerate", GenericCollection.prototype.enumerate);
+define("group", GenericCollection.prototype.group);
+define("sorted", GenericCollection.prototype.sorted);
+define("reversed", GenericCollection.prototype.reversed);
+
+define("constructClone", function (values) {
+    var clone = new this.constructor();
+    clone.addEach(values);
+    return clone;
+});
+
+define("has", function (value, equals) {
+    return this.findValue(value, equals) !== -1;
+});
+
+define("get", function (index, defaultValue) {
+    if (+index !== index) {
+        throw new Error("Indicies must be numbers");
+    } else if (!index in this) {
+        return defaultValue;
+    } else {
+        return this[index];
+    }
+});
+
+define("set", function (index, value) {
+    this[index] = value;
+    return true;
+});
+
+define("add", function (value) {
+    this.push(value);
+    return true;
+});
+
+define("delete", function (value, equals) {
+    var index = this.findValue(value, equals);
+    if (index !== -1) {
+        this.spliceOne(index);
+        return true;
+    }
+    return false;
+});
+
+define("deleteAll", function (value, equals) {
+    equals = equals || this.contentEquals || Object.equals;
+    var count = 0;
+    for (var index = 0; index < this.length;) {
+        if (equals(value, this[index])) {
+            this.swap(index, 1);
+            count++;
+        } else {
+            index++;
+        }
+    }
+    return count;
+});
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find
+// https://tc39.github.io/ecma262/#sec-array.prototype.find
+if (!Array.prototype.find) {
+    define("find", function(predicate) {
+        // 1. Let O be ? ToObject(this value).
+        if (this == null) {
+            throw new TypeError('"this" is null or not defined');
+        }
+
+        var o = Object(this);
+
+        // 2. Let len be ? ToLength(? Get(O, "length")).
+        var len = o.length >>> 0;
+
+        // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+        if (typeof predicate !== 'function') {
+            throw new TypeError('predicate must be a function');
+        }
+
+        // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+        var thisArg = arguments[1];
+
+        // 5. Let k be 0.
+        var k = 0;
+
+        // 6. Repeat, while k < len
+        while (k < len) {
+            // a. Let Pk be ! ToString(k).
+            // b. Let kValue be ? Get(O, Pk).
+            // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+            // d. If testResult is true, return kValue.
+            var kValue = o[k];
+            if (predicate.call(thisArg, kValue, k, o)) {
+                return kValue;
+            }
+            // e. Increase k by 1.
+            k++;
+        }
+    });
+}
+
+// TODO remove in v6 (not present in v2)
+var deprecatedWarnNonce = {};
+function deprecatedWarn(msg, notOnce) {
+    if (
+        typeof console !== 'undefined' &&
+            typeof console.warn === 'function' &&
+                (notOnce !== true && deprecatedWarnNonce.hasOwnProperty(msg) === false)
+    ) {
+        console.warn(msg);
+        deprecatedWarnNonce[msg]++;
+    }
+}
+
+// Save Array.prototype.find in order to support legacy and display warning.
+// TODO remove in v6 (not present in v2)
+var ArrayFindPrototype = Object.getOwnPropertyDescriptor(Array.prototype, 'find').value;
+define("find", function (value, equals, index) {
+    if (
+        typeof arguments[0] === 'function' &&
+            this instanceof Array
+    ) {
+        return ArrayFindPrototype.apply(this, arguments);
+    } else {
+        deprecatedWarn('Array#find usage is deprecated please use Array#findValue');
+        return this.findValue.apply(this, arguments);
+    }
+});
+
+define("findValue", function (value, equals, index) {
+    if (index) {
+        throw new Error("Array#findValue does not support third argument: index");
+    }
+    equals = equals || this.contentEquals || Object.equals;
+    for (var index = 0; index < this.length; index++) {
+        if (index in this && equals(value, this[index])) {
+            return index;
+        }
+    }
+    return -1;
+});
+
+// TODO remove in v6 (not present in v2)
+define("findLast", function (value, equals) {
+    deprecatedWarn('Array#findLast function is deprecated please use Array#findLastValue instead.');
+    return this.findLastValue.apply(this, arguments);
+});
+
+define("findLastValue", function (value, equals) {
+    equals = equals || this.contentEquals || Object.equals;
+    var index = this.length;
+    do {
+        index--;
+        if (index in this && equals(this[index], value)) {
+            return index;
+        }
+    } while (index > 0);
+    return -1;
+});
+
+define("swap", function (start, length, plus) {
+    var args, plusLength, i, j, returnValue;
+    if (start > this.length) {
+        this.length = start;
+    }
+    if (typeof plus !== "undefined") {
+        args = [start, length];
+        if (!Array.isArray(plus)) {
+            plus = array_slice.call(plus);
+        }
+        i = 0;
+        plusLength = plus.length;
+        // 1000 is a magic number, presumed to be smaller than the remaining
+        // stack length. For swaps this small, we take the fast path and just
+        // use the underlying Array splice. We could measure the exact size of
+        // the remaining stack using a try/catch around an unbounded recursive
+        // function, but this would defeat the purpose of short-circuiting in
+        // the common case.
+        if (plusLength < 1000) {
+            for (i; i < plusLength; i++) {
+                args[i+2] = plus[i];
+            }
+            return array_splice.apply(this, args);
+        } else {
+            // Avoid maximum call stack error.
+            // First delete the desired entries.
+            returnValue = array_splice.apply(this, args);
+            // Second batch in 1000s.
+            for (i; i < plusLength;) {
+                args = [start+i, 0];
+                for (j = 2; j < 1002 && i < plusLength; j++, i++) {
+                    args[j] = plus[i];
+                }
+                array_splice.apply(this, args);
+            }
+            return returnValue;
+        }
+    // using call rather than apply to cut down on transient objects
+    } else if (typeof length !== "undefined") {
+        return array_splice.call(this, start, length);
+    }  else if (typeof start !== "undefined") {
+        return array_splice.call(this, start);
+    } else {
+        return [];
+    }
+});
+
+define("peek", function () {
+    return this[0];
+});
+
+define("poke", function (value) {
+    if (this.length > 0) {
+        this[0] = value;
+    }
+});
+
+define("peekBack", function () {
+    if (this.length > 0) {
+        return this[this.length - 1];
+    }
+});
+
+define("pokeBack", function (value) {
+    if (this.length > 0) {
+        this[this.length - 1] = value;
+    }
+});
+
+define("one", function () {
+    for (var i in this) {
+        if (Object.owns(this, i)) {
+            return this[i];
+        }
+    }
+});
+
+if (!Array.prototype.clear) {
+    define("clear", function () {
+        this.length = 0;
+        return this;
+    });
+}
+
+define("compare", function (that, compare) {
+    compare = compare || Object.compare;
+    var i;
+    var length;
+    var lhs;
+    var rhs;
+    var relative;
+
+    if (this === that) {
+        return 0;
+    }
+
+    if (!that || !Array.isArray(that)) {
+        return GenericOrder.prototype.compare.call(this, that, compare);
+    }
+
+    length = (this.length < that.length) ? this.length : that.length;
+
+    for (i = 0; i < length; i++) {
+        if (i in this) {
+            if (!(i in that)) {
+                return -1;
+            } else {
+                lhs = this[i];
+                rhs = that[i];
+                relative = compare(lhs, rhs);
+                if (relative) {
+                    return relative;
+                }
+            }
+        } else if (i in that) {
+            return 1;
+        }
+    }
+
+    return this.length - that.length;
+});
+
+define("equals", function (that, equals) {
+    equals = equals || Object.equals;
+    var i = 0;
+    var length = this.length;
+    var left;
+    var right;
+
+    if (this === that) {
+        return true;
+    }
+    if (!that || !Array.isArray(that)) {
+        return GenericOrder.prototype.equals.call(this, that);
+    }
+
+    if (length !== that.length) {
+        return false;
+    } else {
+        for (; i < length; ++i) {
+            if (i in this) {
+                if (!(i in that)) {
+                    return false;
+                }
+                left = this[i];
+                right = that[i];
+                if (!equals(left, right)) {
+                    return false;
+                }
+            } else {
+                if (i in that) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+});
+
+define("clone", function (depth, memo) {
+    if (depth == null) {
+        depth = Infinity;
+    } else if (depth === 0) {
+        return this;
+    }
+    memo = memo || new WeakMap();
+    if (memo.has(this)) {
+        return memo.get(this);
+    }
+    var clone = new Array(this.length);
+    memo.set(this, clone);
+    for (var i in this) {
+        clone[i] = Object.clone(this[i], depth - 1, memo);
+    };
+    return clone;
+});
+
+define("iterate", function (start, end) {
+    return new ArrayIterator(this, start, end);
+});
+
+if(Array.prototype.spliceOne === void 0) {
+    define("spliceOne", function (index,itemToAdd) {
+        var len=this.length;
+        if (!len) { return }
+        if(arguments.length === 1) {
+            while (index<len) {
+                this[index] = this[index+1];
+                index++
+            }
+            this.length--;
+        }
+        else {
+            this[index] = itemToAdd;
+        }
+    });
+}
+
+define("Iterator", ArrayIterator);
+
+function ArrayIterator(array, start, end) {
+    this.array = array;
+    this.start = start == null ? 0 : start;
+    this.end = end;
+}
+
+ArrayIterator.prototype.__iterationObject = null;
+Object.defineProperty(ArrayIterator.prototype,"_iterationObject", {
+    get: function() {
+        return this.__iterationObject || (this.__iterationObject = { done: false, value:null});
+    }
+});
+
+ArrayIterator.prototype.next = function () {
+    if (this.start === (this.end == null ? this.array.length : this.end)) {
+        this._iterationObject.done = true;
+        this._iterationObject.value = void 0;
+    } else {
+        this._iterationObject.value = this.array[this.start++];
+    }
+    return this._iterationObject;
+};
+
+
+/***/ }),
+
+/***/ 1381:
+/***/ ((module) => {
+
+
+module.exports = Function;
+
+/**
+    A utility to reduce unnecessary allocations of <code>function () {}</code>
+    in its many colorful variations.  It does nothing and returns
+    <code>undefined</code> thus makes a suitable default in some circumstances.
+
+    @function external:Function.noop
+*/
+Function.noop = function () {
+};
+
+/**
+    A utility to reduce unnecessary allocations of <code>function (x) {return
+    x}</code> in its many colorful but ultimately wasteful parameter name
+    variations.
+
+    @function external:Function.identity
+    @param {Any} any value
+    @returns {Any} that value
+*/
+Function.identity = function (value) {
+    return value;
+};
+
+/**
+    A utility for creating a comparator function for a particular aspect of a
+    figurative class of objects.
+
+    @function external:Function.by
+    @param {Function} relation A function that accepts a value and returns a
+    corresponding value to use as a representative when sorting that object.
+    @param {Function} compare an alternate comparator for comparing the
+    represented values.  The default is <code>Object.compare</code>, which
+    does a deep, type-sensitive, polymorphic comparison.
+    @returns {Function} a comparator that has been annotated with
+    <code>by</code> and <code>compare</code> properties so
+    <code>sorted</code> can perform a transform that reduces the need to call
+    <code>by</code> on each sorted object to just once.
+ */
+Function.by = function (by , compare) {
+    compare = compare || Object.compare;
+    by = by || Function.identity;
+    var compareBy = function (a, b) {
+        return compare(by(a), by(b));
+    };
+    compareBy.compare = compare;
+    compareBy.by = by;
+    return compareBy;
+};
+
+// TODO document
+Function.get = function (key) {
+    return function (object) {
+        return Object.get(object, key);
+    };
+};
+
+
+
+/***/ }),
+
+/***/ 5138:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+var WeakMap = __webpack_require__(491);
+
+__webpack_require__(1381);
+
+module.exports = Object;
+
+/*
+    Based in part on extras from Motorola Mobility’s Montage
+    Copyright (c) 2012, Motorola Mobility LLC. All Rights Reserved.
+    3-Clause BSD License
+    https://github.com/motorola-mobility/montage/blob/master/LICENSE.md
+*/
+
+/**
+    Defines extensions to intrinsic <code>Object</code>.
+    @see [Object class]{@link external:Object}
+*/
+
+/**
+    A utility object to avoid unnecessary allocations of an empty object
+    <code>{}</code>.  This object is frozen so it is safe to share.
+
+    @object external:Object.empty
+*/
+Object.empty = Object.freeze(Object.create(null));
+
+/**
+    Returns whether the given value is an object, as opposed to a value.
+    Unboxed numbers, strings, true, false, undefined, and null are not
+    objects.  Arrays are objects.
+
+    @function external:Object.isObject
+    @param {Any} value
+    @returns {Boolean} whether the given value is an object
+*/
+Object.isObject = function (object) {
+    return Object(object) === object;
+};
+
+/**
+    Returns the value of an any value, particularly objects that
+    implement <code>valueOf</code>.
+
+    <p>Note that, unlike the precedent of methods like
+    <code>Object.equals</code> and <code>Object.compare</code> would suggest,
+    this method is named <code>Object.getValueOf</code> instead of
+    <code>valueOf</code>.  This is a delicate issue, but the basis of this
+    decision is that the JavaScript runtime would be far more likely to
+    accidentally call this method with no arguments, assuming that it would
+    return the value of <code>Object</code> itself in various situations,
+    whereas <code>Object.equals(Object, null)</code> protects against this case
+    by noting that <code>Object</code> owns the <code>equals</code> property
+    and therefore does not delegate to it.
+
+    @function external:Object.getValueOf
+    @param {Any} value a value or object wrapping a value
+    @returns {Any} the primitive value of that object, if one exists, or passes
+    the value through
+*/
+Object.getValueOf = function (value) {
+    if (value && typeof value.valueOf === "function") {
+        value = value.valueOf();
+    }
+    return value;
+};
+
+var hashMap = new WeakMap();
+Object.hash = function (object) {
+    if (object && typeof object.hash === "function") {
+        return "" + object.hash();
+    } else if (Object(object) === object) {
+        if (!hashMap.has(object)) {
+            hashMap.set(object, Math.random().toString(36).slice(2));
+        }
+        return hashMap.get(object);
+    } else {
+        return "" + object;
+    }
+};
+
+/**
+    A shorthand for <code>Object.prototype.hasOwnProperty.call(object,
+    key)</code>.  Returns whether the object owns a property for the given key.
+    It does not consult the prototype chain and works for any string (including
+    "hasOwnProperty") except "__proto__".
+
+    @function external:Object.owns
+    @param {Object} object
+    @param {String} key
+    @returns {Boolean} whether the object owns a property wfor the given key.
+*/
+var owns = Object.prototype.hasOwnProperty;
+Object.owns = function (object, key) {
+    return owns.call(object, key);
+};
+
+/**
+    A utility that is like Object.owns but is also useful for finding
+    properties on the prototype chain, provided that they do not refer to
+    methods on the Object prototype.  Works for all strings except "__proto__".
+
+    <p>Alternately, you could use the "in" operator as long as the object
+    descends from "null" instead of the Object.prototype, as with
+    <code>Object.create(null)</code>.  However,
+    <code>Object.create(null)</code> only works in fully compliant EcmaScript 5
+    JavaScript engines and cannot be faithfully shimmed.
+
+    <p>If the given object is an instance of a type that implements a method
+    named "has", this function defers to the collection, so this method can be
+    used to generically handle objects, arrays, or other collections.  In that
+    case, the domain of the key depends on the instance.
+
+    @param {Object} object
+    @param {String} key
+    @returns {Boolean} whether the object, or any of its prototypes except
+    <code>Object.prototype</code>
+    @function external:Object.has
+*/
+Object.has = function (object, key) {
+    if (typeof object !== "object") {
+        throw new Error("Object.has can't accept non-object: " + typeof object);
+    }
+    // forward to mapped collections that implement "has"
+    if (object && typeof object.has === "function") {
+        return object.has(key);
+    // otherwise report whether the key is on the prototype chain,
+    // as long as it is not one of the methods on object.prototype
+    } else if (typeof key === "string") {
+        return key in object && object[key] !== Object.prototype[key];
+    } else {
+        throw new Error("Key must be a string for Object.has on plain objects");
+    }
+};
+
+/**
+    Gets the value for a corresponding key from an object.
+
+    <p>Uses Object.has to determine whether there is a corresponding value for
+    the given key.  As such, <code>Object.get</code> is capable of retriving
+    values from the prototype chain as long as they are not from the
+    <code>Object.prototype</code>.
+
+    <p>If there is no corresponding value, returns the given default, which may
+    be <code>undefined</code>.
+
+    <p>If the given object is an instance of a type that implements a method
+    named "get", this function defers to the collection, so this method can be
+    used to generically handle objects, arrays, or other collections.  In that
+    case, the domain of the key depends on the implementation.  For a `Map`,
+    for example, the key might be any object.
+
+    @param {Object} object
+    @param {String} key
+    @param {Any} value a default to return, <code>undefined</code> if omitted
+    @returns {Any} value for key, or default value
+    @function external:Object.get
+*/
+Object.get = function (object, key, value) {
+    if (typeof object !== "object") {
+        throw new Error("Object.get can't accept non-object: " + typeof object);
+    }
+    // forward to mapped collections that implement "get"
+    if (object && typeof object.get === "function") {
+        return object.get(key, value);
+    } else if (Object.has(object, key)) {
+        return object[key];
+    } else {
+        return value;
+    }
+};
+
+/**
+    Sets the value for a given key on an object.
+
+    <p>If the given object is an instance of a type that implements a method
+    named "set", this function defers to the collection, so this method can be
+    used to generically handle objects, arrays, or other collections.  As such,
+    the key domain varies by the object type.
+
+    @param {Object} object
+    @param {String} key
+    @param {Any} value
+    @returns <code>undefined</code>
+    @function external:Object.set
+*/
+Object.set = function (object, key, value) {
+    if (object && typeof object.set === "function") {
+        object.set(key, value);
+    } else {
+        object[key] = value;
+    }
+};
+
+Object.addEach = function (target, source, overrides) {
+    var overridesExistingProperty = arguments.length === 3 ? overrides : true;
+    if (!source) {
+    } else if (typeof source.forEach === "function" && !source.hasOwnProperty("forEach")) {
+        // copy map-alikes
+        if (source.isMap === true) {
+            source.forEach(function (value, key) {
+                target[key] = value;
+            });
+        // iterate key value pairs of other iterables
+        } else {
+            source.forEach(function (pair) {
+                target[pair[0]] = pair[1];
+            });
+        }
+    } else if (typeof source.length === "number") {
+        // arguments, strings
+        for (var index = 0; index < source.length; index++) {
+            target[index] = source[index];
+        }
+    } else {
+        // copy other objects as map-alikes
+        for(var keys = Object.keys(source), i = 0, key;(key = keys[i]); i++) {
+            if(overridesExistingProperty || !Object.owns(target,key)) {
+                target[key] = source[key];
+            }
+        }
+    }
+    return target;
+};
+
+
+/*
+var defineEach = function defineEach(target, prototype) {
+    // console.log("Map defineEach: ",Object.keys(prototype));
+    var proto = Map.prototype;
+    for (var name in prototype) {
+        if(!proto.hasOwnProperty(name)) {
+            Object.defineProperty(proto, name, {
+                value: prototype[name],
+                writable: writable,
+                configurable: configurable,
+                enumerable: enumerable
+            });
+        }
+    }
+}
+*/
+Object.defineEach = function (target, source, overrides, configurable, enumerable, writable) {
+    var overridesExistingProperty = arguments.length === 3 ? overrides : true;
+    if (!source) {
+    } else if (typeof source.forEach === "function" && !source.hasOwnProperty("forEach")) {
+        // copy map-alikes
+        if (source.isMap === true) {
+            source.forEach(function (value, key) {
+                Object.defineProperty(target, key, {
+                    value: value,
+                    writable: writable,
+                    configurable: configurable,
+                    enumerable: enumerable
+                });
+            });
+        // iterate key value pairs of other iterables
+        } else {
+            source.forEach(function (pair) {
+                Object.defineProperty(target, pair[0], {
+                    value: pair[1],
+                    writable: writable,
+                    configurable: configurable,
+                    enumerable: enumerable
+                });
+
+            });
+        }
+    } else if (typeof source.length === "number") {
+        // arguments, strings
+        for (var index = 0; index < source.length; index++) {
+            Object.defineProperty(target, index, {
+                value: source[index],
+                writable: writable,
+                configurable: configurable,
+                enumerable: enumerable
+            });
+
+        }
+    } else {
+        // copy other objects as map-alikes
+        for(var keys = Object.keys(source), i = 0, key;(key = keys[i]); i++) {
+            if(overridesExistingProperty || !Object.owns(target,key)) {
+                Object.defineProperty(target, key, {
+                    value: source[key],
+                    writable: writable,
+                    configurable: configurable,
+                    enumerable: enumerable
+                });
+
+            }
+        }
+    }
+    return target;
+};
+
+/**
+    Iterates over the owned properties of an object.
+
+    @function external:Object.forEach
+    @param {Object} object an object to iterate.
+    @param {Function} callback a function to call for every key and value
+    pair in the object.  Receives <code>value</code>, <code>key</code>,
+    and <code>object</code> as arguments.
+    @param {Object} thisp the <code>this</code> to pass through to the
+    callback
+*/
+Object.forEach = function (object, callback, thisp) {
+
+    var keys = Object.keys(object), i = 0, iKey;
+    for(;(iKey = keys[i]);i++) {
+        callback.call(thisp, object[iKey], iKey, object);
+    }
+
+};
+
+/**
+    Iterates over the owned properties of a map, constructing a new array of
+    mapped values.
+
+    @function external:Object.map
+    @param {Object} object an object to iterate.
+    @param {Function} callback a function to call for every key and value
+    pair in the object.  Receives <code>value</code>, <code>key</code>,
+    and <code>object</code> as arguments.
+    @param {Object} thisp the <code>this</code> to pass through to the
+    callback
+    @returns {Array} the respective values returned by the callback for each
+    item in the object.
+*/
+Object.map = function (object, callback, thisp) {
+    var keys = Object.keys(object), i = 0, result = [], iKey;
+    for(;(iKey = keys[i]);i++) {
+        result.push(callback.call(thisp, object[iKey], iKey, object));
+    }
+    return result;
+};
+
+/**
+    Returns the values for owned properties of an object.
+
+    @function external:Object.map
+    @param {Object} object
+    @returns {Array} the respective value for each owned property of the
+    object.
+*/
+Object.values = function (object) {
+    return Object.map(object, Function.identity);
+};
+
+// TODO inline document concat
+Object.concat = function () {
+    var object = {};
+    for (var i = 0; i < arguments.length; i++) {
+        Object.addEach(object, arguments[i]);
+    }
+    return object;
+};
+
+Object.from = Object.concat;
+
+/**
+    Returns whether two values are identical.  Any value is identical to itself
+    and only itself.  This is much more restictive than equivalence and subtly
+    different than strict equality, <code>===</code> because of edge cases
+    including negative zero and <code>NaN</code>.  Identity is useful for
+    resolving collisions among keys in a mapping where the domain is any value.
+    This method does not delgate to any method on an object and cannot be
+    overridden.
+    @see http://wiki.ecmascript.org/doku.php?id=harmony:egal
+    @param {Any} this
+    @param {Any} that
+    @returns {Boolean} whether this and that are identical
+    @function external:Object.is
+*/
+Object.is = function (x, y) {
+    if (x === y) {
+        // 0 === -0, but they are not identical
+        return x !== 0 || 1 / x === 1 / y;
+    }
+    // NaN !== NaN, but they are identical.
+    // NaNs are the only non-reflexive value, i.e., if x !== x,
+    // then x is a NaN.
+    // isNaN is broken: it converts its argument to number, so
+    // isNaN("foo") => true
+    return x !== x && y !== y;
+};
+
+/**
+    Performs a polymorphic, type-sensitive deep equivalence comparison of any
+    two values.
+
+    <p>As a basic principle, any value is equivalent to itself (as in
+    identity), any boxed version of itself (as a <code>new Number(10)</code> is
+    to 10), and any deep clone of itself.
+
+    <p>Equivalence has the following properties:
+
+    <ul>
+        <li><strong>polymorphic:</strong>
+            If the given object is an instance of a type that implements a
+            methods named "equals", this function defers to the method.  So,
+            this function can safely compare any values regardless of type,
+            including undefined, null, numbers, strings, any pair of objects
+            where either implements "equals", or object literals that may even
+            contain an "equals" key.
+        <li><strong>type-sensitive:</strong>
+            Incomparable types are not equal.  No object is equivalent to any
+            array.  No string is equal to any other number.
+        <li><strong>deep:</strong>
+            Collections with equivalent content are equivalent, recursively.
+        <li><strong>equivalence:</strong>
+            Identical values and objects are equivalent, but so are collections
+            that contain equivalent content.  Whether order is important varies
+            by type.  For Arrays and lists, order is important.  For Objects,
+            maps, and sets, order is not important.  Boxed objects are mutally
+            equivalent with their unboxed values, by virtue of the standard
+            <code>valueOf</code> method.
+    </ul>
+    @param this
+    @param that
+    @returns {Boolean} whether the values are deeply equivalent
+    @function external:Object.equals
+*/
+Object.equals = function (a, b, equals, memo) {
+    equals = equals || Object.equals;
+    //console.log("Object.equals: a:",a, "b:",b, "equals:",equals);
+    // unbox objects, but do not confuse object literals
+    a = Object.getValueOf(a);
+    b = Object.getValueOf(b);
+    if (a === b)
+        return true;
+    if (Object.isObject(a)) {
+        memo = memo || new WeakMap();
+        if (memo.has(a)) {
+            return true;
+        }
+        memo.set(a, true);
+    }
+    if (Object.isObject(a) && typeof a.equals === "function") {
+        return a.equals(b, equals, memo);
+    }
+    // commutative
+    if (Object.isObject(b) && typeof b.equals === "function") {
+        return b.equals(a, equals, memo);
+    }
+    if (Object.isObject(a) && Object.isObject(b)) {
+        if (Object.getPrototypeOf(a) === Object.prototype && Object.getPrototypeOf(b) === Object.prototype) {
+            for (var name in a) {
+                if (!equals(a[name], b[name], equals, memo)) {
+                    return false;
+                }
+            }
+            for (var name in b) {
+                if (!(name in a) || !equals(b[name], a[name], equals, memo)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    // NaN !== NaN, but they are equal.
+    // NaNs are the only non-reflexive value, i.e., if x !== x,
+    // then x is a NaN.
+    // isNaN is broken: it converts its argument to number, so
+    // isNaN("foo") => true
+    // We have established that a !== b, but if a !== a && b !== b, they are
+    // both NaN.
+    if (a !== a && b !== b)
+        return true;
+    if (!a || !b)
+        return a === b;
+    return false;
+};
+
+// Because a return value of 0 from a `compare` function  may mean either
+// "equals" or "is incomparable", `equals` cannot be defined in terms of
+// `compare`.  However, `compare` *can* be defined in terms of `equals` and
+// `lessThan`.  Again however, more often it would be desirable to implement
+// all of the comparison functions in terms of compare rather than the other
+// way around.
+
+/**
+    Determines the order in which any two objects should be sorted by returning
+    a number that has an analogous relationship to zero as the left value to
+    the right.  That is, if the left is "less than" the right, the returned
+    value will be "less than" zero, where "less than" may be any other
+    transitive relationship.
+
+    <p>Arrays are compared by the first diverging values, or by length.
+
+    <p>Any two values that are incomparable return zero.  As such,
+    <code>equals</code> should not be implemented with <code>compare</code>
+    since incomparability is indistinguishable from equality.
+
+    <p>Sorts strings lexicographically.  This is not suitable for any
+    particular international setting.  Different locales sort their phone books
+    in very different ways, particularly regarding diacritics and ligatures.
+
+    <p>If the given object is an instance of a type that implements a method
+    named "compare", this function defers to the instance.  The method does not
+    need to be an owned property to distinguish it from an object literal since
+    object literals are incomparable.  Unlike <code>Object</code> however,
+    <code>Array</code> implements <code>compare</code>.
+
+    @param {Any} left
+    @param {Any} right
+    @returns {Number} a value having the same transitive relationship to zero
+    as the left and right values.
+    @function external:Object.compare
+*/
+Object.compare = function (a, b) {
+    // unbox objects, but do not confuse object literals
+    // mercifully handles the Date case
+    a = Object.getValueOf(a);
+    b = Object.getValueOf(b);
+    if (a === b)
+        return 0;
+    var aType = typeof a;
+    var bType = typeof b;
+    if (aType === "number" && bType === "number")
+        return a - b;
+    if (aType === "string" && bType === "string")
+        return a < b ? -Infinity : Infinity;
+        // the possibility of equality elimiated above
+    if (a && typeof a.compare === "function")
+        return a.compare(b);
+    // not commutative, the relationship is reversed
+    if (b && typeof b.compare === "function")
+        return -b.compare(a);
+    return 0;
+};
+
+/**
+    Creates a deep copy of any value.  Values, being immutable, are
+    returned without alternation.  Forwards to <code>clone</code> on
+    objects and arrays.
+
+    @function external:Object.clone
+    @param {Any} value a value to clone
+    @param {Number} depth an optional traversal depth, defaults to infinity.
+    A value of <code>0</code> means to make no clone and return the value
+    directly.
+    @param {Map} memo an optional memo of already visited objects to preserve
+    reference cycles.  The cloned object will have the exact same shape as the
+    original, but no identical objects.  Te map may be later used to associate
+    all objects in the original object graph with their corresponding member of
+    the cloned graph.
+    @returns a copy of the value
+*/
+Object.clone = function (value, depth, memo) {
+    value = Object.getValueOf(value);
+    memo = memo || new WeakMap();
+    if (depth === undefined) {
+        depth = Infinity;
+    } else if (depth === 0) {
+        return value;
+    }
+    if (Object.isObject(value)) {
+        if (!memo.has(value)) {
+            if (value && typeof value.clone === "function") {
+                memo.set(value, value.clone(depth, memo));
+            } else {
+                var prototype = Object.getPrototypeOf(value);
+                if (prototype === null || prototype === Object.prototype) {
+                    var clone = Object.create(prototype);
+                    memo.set(value, clone);
+                    for (var key in value) {
+                        clone[key] = Object.clone(value[key], depth - 1, memo);
+                    }
+                } else {
+                    throw new Error("Can't clone " + value);
+                }
+            }
+        }
+        return memo.get(value);
+    }
+    return value;
+};
+
+/**
+    Removes all properties owned by this object making the object suitable for
+    reuse.
+
+    @function external:Object.clear
+    @returns this
+*/
+Object.clear = function (object) {
+    if (object && typeof object.clear === "function") {
+        object.clear();
+    } else {
+        var keys = Object.keys(object),
+            i = keys.length;
+        while (i) {
+            i--;
+            delete object[keys[i]];
+        }
+    }
+    return object;
+};
+
+
+/***/ }),
+
+/***/ 2755:
+/***/ (() => {
+
+
+/**
+    accepts a string; returns the string with regex metacharacters escaped.
+    the returned string can safely be used within a regex to match a literal
+    string. escaped characters are [, ], {, }, (, ), -, *, +, ?, ., \, ^, $,
+    |, #, [comma], and whitespace.
+*/
+if (!RegExp.escape) {
+    var special = /[-[\]{}()*+?.\\^$|,#\s]/g;
+    RegExp.escape = function (string) {
+        return string.replace(special, "\\$&");
+    };
+}
+
+
+
+/***/ }),
+
+/***/ 9179:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
+
+
+var Array = __webpack_require__(8475);
+var Object = __webpack_require__(5138);
+var Function = __webpack_require__(1381);
+var RegExp = __webpack_require__(2755);
+
+
+
+/***/ }),
+
+/***/ 1783:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = TreeLog;
+
+function TreeLog() {
+}
+
+TreeLog.ascii = {
+    intersection: "+",
+    through: "-",
+    branchUp: "+",
+    branchDown: "+",
+    fromBelow: ".",
+    fromAbove: "'",
+    fromBoth: "+",
+    strafe: "|"
+};
+
+TreeLog.unicodeRound = {
+    intersection: "\u254b",
+    through: "\u2501",
+    branchUp: "\u253b",
+    branchDown: "\u2533",
+    fromBelow: "\u256d", // round corner
+    fromAbove: "\u2570", // round corner
+    fromBoth: "\u2523",
+    strafe: "\u2503"
+};
+
+TreeLog.unicodeSharp = {
+    intersection: "\u254b",
+    through: "\u2501",
+    branchUp: "\u253b",
+    branchDown: "\u2533",
+    fromBelow: "\u250f", // sharp corner
+    fromAbove: "\u2517", // sharp corner
+    fromBoth: "\u2523",
+    strafe: "\u2503"
+};
+
+
+
+/***/ }),
+
+/***/ 491:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+
+module.exports = (typeof WeakMap !== 'undefined') ? WeakMap : __webpack_require__(2414);
+
+
+/***/ }),
+
+/***/ 6891:
 /***/ ((module) => {
 
 module.exports = function (xs, fn) {
@@ -729,7 +5442,7 @@ var isArray = Array.isArray || function (xs) {
 
 /***/ }),
 
-/***/ 863:
+/***/ 6863:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 module.exports = realpath
@@ -739,13 +5452,13 @@ realpath.realpathSync = realpathSync
 realpath.monkeypatch = monkeypatch
 realpath.unmonkeypatch = unmonkeypatch
 
-var fs = __webpack_require__(747)
+var fs = __webpack_require__(5747)
 var origRealpath = fs.realpath
 var origRealpathSync = fs.realpathSync
 
 var version = process.version
 var ok = /^v[0-5]\./.test(version)
-var old = __webpack_require__(734)
+var old = __webpack_require__(1734)
 
 function newError (er) {
   return er && er.syscall === 'realpath' && (
@@ -802,7 +5515,7 @@ function unmonkeypatch () {
 
 /***/ }),
 
-/***/ 734:
+/***/ 1734:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -826,9 +5539,9 @@ function unmonkeypatch () {
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var pathModule = __webpack_require__(622);
+var pathModule = __webpack_require__(5622);
 var isWindows = process.platform === 'win32';
-var fs = __webpack_require__(747);
+var fs = __webpack_require__(5747);
 
 // JavaScript implementation of realpath, ported from node pre-v6
 
@@ -1112,7 +5825,7 @@ exports.realpath = function realpath(p, cache, cb) {
 
 /***/ }),
 
-/***/ 625:
+/***/ 7625:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 exports.alphasort = alphasort
@@ -1129,9 +5842,9 @@ function ownProp (obj, field) {
   return Object.prototype.hasOwnProperty.call(obj, field)
 }
 
-var path = __webpack_require__(622)
-var minimatch = __webpack_require__(973)
-var isAbsolute = __webpack_require__(714)
+var path = __webpack_require__(5622)
+var minimatch = __webpack_require__(3973)
+var isAbsolute = __webpack_require__(8714)
 var Minimatch = minimatch.Minimatch
 
 function alphasorti (a, b) {
@@ -1359,7 +6072,7 @@ function childrenIgnored (self, path) {
 
 /***/ }),
 
-/***/ 957:
+/***/ 1957:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // Approach:
@@ -1404,27 +6117,27 @@ function childrenIgnored (self, path) {
 
 module.exports = glob
 
-var fs = __webpack_require__(747)
-var rp = __webpack_require__(863)
-var minimatch = __webpack_require__(973)
+var fs = __webpack_require__(5747)
+var rp = __webpack_require__(6863)
+var minimatch = __webpack_require__(3973)
 var Minimatch = minimatch.Minimatch
-var inherits = __webpack_require__(124)
-var EE = __webpack_require__(614).EventEmitter
-var path = __webpack_require__(622)
-var assert = __webpack_require__(357)
-var isAbsolute = __webpack_require__(714)
-var globSync = __webpack_require__(10)
-var common = __webpack_require__(625)
+var inherits = __webpack_require__(4124)
+var EE = __webpack_require__(8614).EventEmitter
+var path = __webpack_require__(5622)
+var assert = __webpack_require__(2357)
+var isAbsolute = __webpack_require__(8714)
+var globSync = __webpack_require__(9010)
+var common = __webpack_require__(7625)
 var alphasort = common.alphasort
 var alphasorti = common.alphasorti
 var setopts = common.setopts
 var ownProp = common.ownProp
-var inflight = __webpack_require__(492)
-var util = __webpack_require__(669)
+var inflight = __webpack_require__(2492)
+var util = __webpack_require__(1669)
 var childrenIgnored = common.childrenIgnored
 var isIgnored = common.isIgnored
 
-var once = __webpack_require__(223)
+var once = __webpack_require__(1223)
 
 function glob (pattern, options, cb) {
   if (typeof options === 'function') cb = options, options = {}
@@ -2156,22 +6869,22 @@ Glob.prototype._stat2 = function (f, abs, er, stat, cb) {
 
 /***/ }),
 
-/***/ 10:
+/***/ 9010:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 module.exports = globSync
 globSync.GlobSync = GlobSync
 
-var fs = __webpack_require__(747)
-var rp = __webpack_require__(863)
-var minimatch = __webpack_require__(973)
+var fs = __webpack_require__(5747)
+var rp = __webpack_require__(6863)
+var minimatch = __webpack_require__(3973)
 var Minimatch = minimatch.Minimatch
-var Glob = __webpack_require__(957).Glob
-var util = __webpack_require__(669)
-var path = __webpack_require__(622)
-var assert = __webpack_require__(357)
-var isAbsolute = __webpack_require__(714)
-var common = __webpack_require__(625)
+var Glob = __webpack_require__(1957).Glob
+var util = __webpack_require__(1669)
+var path = __webpack_require__(5622)
+var assert = __webpack_require__(2357)
+var isAbsolute = __webpack_require__(8714)
+var common = __webpack_require__(7625)
 var alphasort = common.alphasort
 var alphasorti = common.alphasorti
 var setopts = common.setopts
@@ -2649,12 +7362,12 @@ GlobSync.prototype._makeAbs = function (f) {
 
 /***/ }),
 
-/***/ 492:
+/***/ 2492:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var wrappy = __webpack_require__(940)
+var wrappy = __webpack_require__(2940)
 var reqs = Object.create(null)
-var once = __webpack_require__(223)
+var once = __webpack_require__(1223)
 
 module.exports = wrappy(inflight)
 
@@ -2710,23 +7423,23 @@ function slice (args) {
 
 /***/ }),
 
-/***/ 124:
+/***/ 4124:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 try {
-  var util = __webpack_require__(669);
+  var util = __webpack_require__(1669);
   /* istanbul ignore next */
   if (typeof util.inherits !== 'function') throw '';
   module.exports = util.inherits;
 } catch (e) {
   /* istanbul ignore next */
-  module.exports = __webpack_require__(544);
+  module.exports = __webpack_require__(8544);
 }
 
 
 /***/ }),
 
-/***/ 544:
+/***/ 8544:
 /***/ ((module) => {
 
 if (typeof Object.create === 'function') {
@@ -2760,7 +7473,7 @@ if (typeof Object.create === 'function') {
 
 /***/ }),
 
-/***/ 973:
+/***/ 3973:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 module.exports = minimatch
@@ -2768,11 +7481,11 @@ minimatch.Minimatch = Minimatch
 
 var path = { sep: '/' }
 try {
-  path = __webpack_require__(622)
+  path = __webpack_require__(5622)
 } catch (er) {}
 
 var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
-var expand = __webpack_require__(850)
+var expand = __webpack_require__(3717)
 
 var plTypes = {
   '!': { open: '(?:(?!(?:', close: '))[^/]*?)'},
@@ -3690,10 +8403,10 @@ function regExpEscape (s) {
 
 /***/ }),
 
-/***/ 223:
+/***/ 1223:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var wrappy = __webpack_require__(940)
+var wrappy = __webpack_require__(2940)
 module.exports = wrappy(once)
 module.exports.strict = wrappy(onceStrict)
 
@@ -3739,7 +8452,7 @@ function onceStrict (fn) {
 
 /***/ }),
 
-/***/ 714:
+/***/ 8714:
 /***/ ((module) => {
 
 "use strict";
@@ -3767,7 +8480,2271 @@ module.exports.win32 = win32;
 
 /***/ }),
 
-/***/ 940:
+/***/ 2043:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+;(function (sax) { // wrapper for non-node envs
+  sax.parser = function (strict, opt) { return new SAXParser(strict, opt) }
+  sax.SAXParser = SAXParser
+  sax.SAXStream = SAXStream
+  sax.createStream = createStream
+
+  // When we pass the MAX_BUFFER_LENGTH position, start checking for buffer overruns.
+  // When we check, schedule the next check for MAX_BUFFER_LENGTH - (max(buffer lengths)),
+  // since that's the earliest that a buffer overrun could occur.  This way, checks are
+  // as rare as required, but as often as necessary to ensure never crossing this bound.
+  // Furthermore, buffers are only tested at most once per write(), so passing a very
+  // large string into write() might have undesirable effects, but this is manageable by
+  // the caller, so it is assumed to be safe.  Thus, a call to write() may, in the extreme
+  // edge case, result in creating at most one complete copy of the string passed in.
+  // Set to Infinity to have unlimited buffers.
+  sax.MAX_BUFFER_LENGTH = 64 * 1024
+
+  var buffers = [
+    'comment', 'sgmlDecl', 'textNode', 'tagName', 'doctype',
+    'procInstName', 'procInstBody', 'entity', 'attribName',
+    'attribValue', 'cdata', 'script'
+  ]
+
+  sax.EVENTS = [
+    'text',
+    'processinginstruction',
+    'sgmldeclaration',
+    'doctype',
+    'comment',
+    'opentagstart',
+    'attribute',
+    'opentag',
+    'closetag',
+    'opencdata',
+    'cdata',
+    'closecdata',
+    'error',
+    'end',
+    'ready',
+    'script',
+    'opennamespace',
+    'closenamespace'
+  ]
+
+  function SAXParser (strict, opt) {
+    if (!(this instanceof SAXParser)) {
+      return new SAXParser(strict, opt)
+    }
+
+    var parser = this
+    clearBuffers(parser)
+    parser.q = parser.c = ''
+    parser.bufferCheckPosition = sax.MAX_BUFFER_LENGTH
+    parser.opt = opt || {}
+    parser.opt.lowercase = parser.opt.lowercase || parser.opt.lowercasetags
+    parser.looseCase = parser.opt.lowercase ? 'toLowerCase' : 'toUpperCase'
+    parser.tags = []
+    parser.closed = parser.closedRoot = parser.sawRoot = false
+    parser.tag = parser.error = null
+    parser.strict = !!strict
+    parser.noscript = !!(strict || parser.opt.noscript)
+    parser.state = S.BEGIN
+    parser.strictEntities = parser.opt.strictEntities
+    parser.ENTITIES = parser.strictEntities ? Object.create(sax.XML_ENTITIES) : Object.create(sax.ENTITIES)
+    parser.attribList = []
+
+    // namespaces form a prototype chain.
+    // it always points at the current tag,
+    // which protos to its parent tag.
+    if (parser.opt.xmlns) {
+      parser.ns = Object.create(rootNS)
+    }
+
+    // mostly just for error reporting
+    parser.trackPosition = parser.opt.position !== false
+    if (parser.trackPosition) {
+      parser.position = parser.line = parser.column = 0
+    }
+    emit(parser, 'onready')
+  }
+
+  if (!Object.create) {
+    Object.create = function (o) {
+      function F () {}
+      F.prototype = o
+      var newf = new F()
+      return newf
+    }
+  }
+
+  if (!Object.keys) {
+    Object.keys = function (o) {
+      var a = []
+      for (var i in o) if (o.hasOwnProperty(i)) a.push(i)
+      return a
+    }
+  }
+
+  function checkBufferLength (parser) {
+    var maxAllowed = Math.max(sax.MAX_BUFFER_LENGTH, 10)
+    var maxActual = 0
+    for (var i = 0, l = buffers.length; i < l; i++) {
+      var len = parser[buffers[i]].length
+      if (len > maxAllowed) {
+        // Text/cdata nodes can get big, and since they're buffered,
+        // we can get here under normal conditions.
+        // Avoid issues by emitting the text node now,
+        // so at least it won't get any bigger.
+        switch (buffers[i]) {
+          case 'textNode':
+            closeText(parser)
+            break
+
+          case 'cdata':
+            emitNode(parser, 'oncdata', parser.cdata)
+            parser.cdata = ''
+            break
+
+          case 'script':
+            emitNode(parser, 'onscript', parser.script)
+            parser.script = ''
+            break
+
+          default:
+            error(parser, 'Max buffer length exceeded: ' + buffers[i])
+        }
+      }
+      maxActual = Math.max(maxActual, len)
+    }
+    // schedule the next check for the earliest possible buffer overrun.
+    var m = sax.MAX_BUFFER_LENGTH - maxActual
+    parser.bufferCheckPosition = m + parser.position
+  }
+
+  function clearBuffers (parser) {
+    for (var i = 0, l = buffers.length; i < l; i++) {
+      parser[buffers[i]] = ''
+    }
+  }
+
+  function flushBuffers (parser) {
+    closeText(parser)
+    if (parser.cdata !== '') {
+      emitNode(parser, 'oncdata', parser.cdata)
+      parser.cdata = ''
+    }
+    if (parser.script !== '') {
+      emitNode(parser, 'onscript', parser.script)
+      parser.script = ''
+    }
+  }
+
+  SAXParser.prototype = {
+    end: function () { end(this) },
+    write: write,
+    resume: function () { this.error = null; return this },
+    close: function () { return this.write(null) },
+    flush: function () { flushBuffers(this) }
+  }
+
+  var Stream
+  try {
+    Stream = __webpack_require__(2413).Stream
+  } catch (ex) {
+    Stream = function () {}
+  }
+
+  var streamWraps = sax.EVENTS.filter(function (ev) {
+    return ev !== 'error' && ev !== 'end'
+  })
+
+  function createStream (strict, opt) {
+    return new SAXStream(strict, opt)
+  }
+
+  function SAXStream (strict, opt) {
+    if (!(this instanceof SAXStream)) {
+      return new SAXStream(strict, opt)
+    }
+
+    Stream.apply(this)
+
+    this._parser = new SAXParser(strict, opt)
+    this.writable = true
+    this.readable = true
+
+    var me = this
+
+    this._parser.onend = function () {
+      me.emit('end')
+    }
+
+    this._parser.onerror = function (er) {
+      me.emit('error', er)
+
+      // if didn't throw, then means error was handled.
+      // go ahead and clear error, so we can write again.
+      me._parser.error = null
+    }
+
+    this._decoder = null
+
+    streamWraps.forEach(function (ev) {
+      Object.defineProperty(me, 'on' + ev, {
+        get: function () {
+          return me._parser['on' + ev]
+        },
+        set: function (h) {
+          if (!h) {
+            me.removeAllListeners(ev)
+            me._parser['on' + ev] = h
+            return h
+          }
+          me.on(ev, h)
+        },
+        enumerable: true,
+        configurable: false
+      })
+    })
+  }
+
+  SAXStream.prototype = Object.create(Stream.prototype, {
+    constructor: {
+      value: SAXStream
+    }
+  })
+
+  SAXStream.prototype.write = function (data) {
+    if (typeof Buffer === 'function' &&
+      typeof Buffer.isBuffer === 'function' &&
+      Buffer.isBuffer(data)) {
+      if (!this._decoder) {
+        var SD = __webpack_require__(4304).StringDecoder
+        this._decoder = new SD('utf8')
+      }
+      data = this._decoder.write(data)
+    }
+
+    this._parser.write(data.toString())
+    this.emit('data', data)
+    return true
+  }
+
+  SAXStream.prototype.end = function (chunk) {
+    if (chunk && chunk.length) {
+      this.write(chunk)
+    }
+    this._parser.end()
+    return true
+  }
+
+  SAXStream.prototype.on = function (ev, handler) {
+    var me = this
+    if (!me._parser['on' + ev] && streamWraps.indexOf(ev) !== -1) {
+      me._parser['on' + ev] = function () {
+        var args = arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)
+        args.splice(0, 0, ev)
+        me.emit.apply(me, args)
+      }
+    }
+
+    return Stream.prototype.on.call(me, ev, handler)
+  }
+
+  // this really needs to be replaced with character classes.
+  // XML allows all manner of ridiculous numbers and digits.
+  var CDATA = '[CDATA['
+  var DOCTYPE = 'DOCTYPE'
+  var XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace'
+  var XMLNS_NAMESPACE = 'http://www.w3.org/2000/xmlns/'
+  var rootNS = { xml: XML_NAMESPACE, xmlns: XMLNS_NAMESPACE }
+
+  // http://www.w3.org/TR/REC-xml/#NT-NameStartChar
+  // This implementation works on strings, a single character at a time
+  // as such, it cannot ever support astral-plane characters (10000-EFFFF)
+  // without a significant breaking change to either this  parser, or the
+  // JavaScript language.  Implementation of an emoji-capable xml parser
+  // is left as an exercise for the reader.
+  var nameStart = /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/
+
+  var nameBody = /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u00B7\u0300-\u036F\u203F-\u2040.\d-]/
+
+  var entityStart = /[#:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/
+  var entityBody = /[#:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u00B7\u0300-\u036F\u203F-\u2040.\d-]/
+
+  function isWhitespace (c) {
+    return c === ' ' || c === '\n' || c === '\r' || c === '\t'
+  }
+
+  function isQuote (c) {
+    return c === '"' || c === '\''
+  }
+
+  function isAttribEnd (c) {
+    return c === '>' || isWhitespace(c)
+  }
+
+  function isMatch (regex, c) {
+    return regex.test(c)
+  }
+
+  function notMatch (regex, c) {
+    return !isMatch(regex, c)
+  }
+
+  var S = 0
+  sax.STATE = {
+    BEGIN: S++, // leading byte order mark or whitespace
+    BEGIN_WHITESPACE: S++, // leading whitespace
+    TEXT: S++, // general stuff
+    TEXT_ENTITY: S++, // &amp and such.
+    OPEN_WAKA: S++, // <
+    SGML_DECL: S++, // <!BLARG
+    SGML_DECL_QUOTED: S++, // <!BLARG foo "bar
+    DOCTYPE: S++, // <!DOCTYPE
+    DOCTYPE_QUOTED: S++, // <!DOCTYPE "//blah
+    DOCTYPE_DTD: S++, // <!DOCTYPE "//blah" [ ...
+    DOCTYPE_DTD_QUOTED: S++, // <!DOCTYPE "//blah" [ "foo
+    COMMENT_STARTING: S++, // <!-
+    COMMENT: S++, // <!--
+    COMMENT_ENDING: S++, // <!-- blah -
+    COMMENT_ENDED: S++, // <!-- blah --
+    CDATA: S++, // <![CDATA[ something
+    CDATA_ENDING: S++, // ]
+    CDATA_ENDING_2: S++, // ]]
+    PROC_INST: S++, // <?hi
+    PROC_INST_BODY: S++, // <?hi there
+    PROC_INST_ENDING: S++, // <?hi "there" ?
+    OPEN_TAG: S++, // <strong
+    OPEN_TAG_SLASH: S++, // <strong /
+    ATTRIB: S++, // <a
+    ATTRIB_NAME: S++, // <a foo
+    ATTRIB_NAME_SAW_WHITE: S++, // <a foo _
+    ATTRIB_VALUE: S++, // <a foo=
+    ATTRIB_VALUE_QUOTED: S++, // <a foo="bar
+    ATTRIB_VALUE_CLOSED: S++, // <a foo="bar"
+    ATTRIB_VALUE_UNQUOTED: S++, // <a foo=bar
+    ATTRIB_VALUE_ENTITY_Q: S++, // <foo bar="&quot;"
+    ATTRIB_VALUE_ENTITY_U: S++, // <foo bar=&quot
+    CLOSE_TAG: S++, // </a
+    CLOSE_TAG_SAW_WHITE: S++, // </a   >
+    SCRIPT: S++, // <script> ...
+    SCRIPT_ENDING: S++ // <script> ... <
+  }
+
+  sax.XML_ENTITIES = {
+    'amp': '&',
+    'gt': '>',
+    'lt': '<',
+    'quot': '"',
+    'apos': "'"
+  }
+
+  sax.ENTITIES = {
+    'amp': '&',
+    'gt': '>',
+    'lt': '<',
+    'quot': '"',
+    'apos': "'",
+    'AElig': 198,
+    'Aacute': 193,
+    'Acirc': 194,
+    'Agrave': 192,
+    'Aring': 197,
+    'Atilde': 195,
+    'Auml': 196,
+    'Ccedil': 199,
+    'ETH': 208,
+    'Eacute': 201,
+    'Ecirc': 202,
+    'Egrave': 200,
+    'Euml': 203,
+    'Iacute': 205,
+    'Icirc': 206,
+    'Igrave': 204,
+    'Iuml': 207,
+    'Ntilde': 209,
+    'Oacute': 211,
+    'Ocirc': 212,
+    'Ograve': 210,
+    'Oslash': 216,
+    'Otilde': 213,
+    'Ouml': 214,
+    'THORN': 222,
+    'Uacute': 218,
+    'Ucirc': 219,
+    'Ugrave': 217,
+    'Uuml': 220,
+    'Yacute': 221,
+    'aacute': 225,
+    'acirc': 226,
+    'aelig': 230,
+    'agrave': 224,
+    'aring': 229,
+    'atilde': 227,
+    'auml': 228,
+    'ccedil': 231,
+    'eacute': 233,
+    'ecirc': 234,
+    'egrave': 232,
+    'eth': 240,
+    'euml': 235,
+    'iacute': 237,
+    'icirc': 238,
+    'igrave': 236,
+    'iuml': 239,
+    'ntilde': 241,
+    'oacute': 243,
+    'ocirc': 244,
+    'ograve': 242,
+    'oslash': 248,
+    'otilde': 245,
+    'ouml': 246,
+    'szlig': 223,
+    'thorn': 254,
+    'uacute': 250,
+    'ucirc': 251,
+    'ugrave': 249,
+    'uuml': 252,
+    'yacute': 253,
+    'yuml': 255,
+    'copy': 169,
+    'reg': 174,
+    'nbsp': 160,
+    'iexcl': 161,
+    'cent': 162,
+    'pound': 163,
+    'curren': 164,
+    'yen': 165,
+    'brvbar': 166,
+    'sect': 167,
+    'uml': 168,
+    'ordf': 170,
+    'laquo': 171,
+    'not': 172,
+    'shy': 173,
+    'macr': 175,
+    'deg': 176,
+    'plusmn': 177,
+    'sup1': 185,
+    'sup2': 178,
+    'sup3': 179,
+    'acute': 180,
+    'micro': 181,
+    'para': 182,
+    'middot': 183,
+    'cedil': 184,
+    'ordm': 186,
+    'raquo': 187,
+    'frac14': 188,
+    'frac12': 189,
+    'frac34': 190,
+    'iquest': 191,
+    'times': 215,
+    'divide': 247,
+    'OElig': 338,
+    'oelig': 339,
+    'Scaron': 352,
+    'scaron': 353,
+    'Yuml': 376,
+    'fnof': 402,
+    'circ': 710,
+    'tilde': 732,
+    'Alpha': 913,
+    'Beta': 914,
+    'Gamma': 915,
+    'Delta': 916,
+    'Epsilon': 917,
+    'Zeta': 918,
+    'Eta': 919,
+    'Theta': 920,
+    'Iota': 921,
+    'Kappa': 922,
+    'Lambda': 923,
+    'Mu': 924,
+    'Nu': 925,
+    'Xi': 926,
+    'Omicron': 927,
+    'Pi': 928,
+    'Rho': 929,
+    'Sigma': 931,
+    'Tau': 932,
+    'Upsilon': 933,
+    'Phi': 934,
+    'Chi': 935,
+    'Psi': 936,
+    'Omega': 937,
+    'alpha': 945,
+    'beta': 946,
+    'gamma': 947,
+    'delta': 948,
+    'epsilon': 949,
+    'zeta': 950,
+    'eta': 951,
+    'theta': 952,
+    'iota': 953,
+    'kappa': 954,
+    'lambda': 955,
+    'mu': 956,
+    'nu': 957,
+    'xi': 958,
+    'omicron': 959,
+    'pi': 960,
+    'rho': 961,
+    'sigmaf': 962,
+    'sigma': 963,
+    'tau': 964,
+    'upsilon': 965,
+    'phi': 966,
+    'chi': 967,
+    'psi': 968,
+    'omega': 969,
+    'thetasym': 977,
+    'upsih': 978,
+    'piv': 982,
+    'ensp': 8194,
+    'emsp': 8195,
+    'thinsp': 8201,
+    'zwnj': 8204,
+    'zwj': 8205,
+    'lrm': 8206,
+    'rlm': 8207,
+    'ndash': 8211,
+    'mdash': 8212,
+    'lsquo': 8216,
+    'rsquo': 8217,
+    'sbquo': 8218,
+    'ldquo': 8220,
+    'rdquo': 8221,
+    'bdquo': 8222,
+    'dagger': 8224,
+    'Dagger': 8225,
+    'bull': 8226,
+    'hellip': 8230,
+    'permil': 8240,
+    'prime': 8242,
+    'Prime': 8243,
+    'lsaquo': 8249,
+    'rsaquo': 8250,
+    'oline': 8254,
+    'frasl': 8260,
+    'euro': 8364,
+    'image': 8465,
+    'weierp': 8472,
+    'real': 8476,
+    'trade': 8482,
+    'alefsym': 8501,
+    'larr': 8592,
+    'uarr': 8593,
+    'rarr': 8594,
+    'darr': 8595,
+    'harr': 8596,
+    'crarr': 8629,
+    'lArr': 8656,
+    'uArr': 8657,
+    'rArr': 8658,
+    'dArr': 8659,
+    'hArr': 8660,
+    'forall': 8704,
+    'part': 8706,
+    'exist': 8707,
+    'empty': 8709,
+    'nabla': 8711,
+    'isin': 8712,
+    'notin': 8713,
+    'ni': 8715,
+    'prod': 8719,
+    'sum': 8721,
+    'minus': 8722,
+    'lowast': 8727,
+    'radic': 8730,
+    'prop': 8733,
+    'infin': 8734,
+    'ang': 8736,
+    'and': 8743,
+    'or': 8744,
+    'cap': 8745,
+    'cup': 8746,
+    'int': 8747,
+    'there4': 8756,
+    'sim': 8764,
+    'cong': 8773,
+    'asymp': 8776,
+    'ne': 8800,
+    'equiv': 8801,
+    'le': 8804,
+    'ge': 8805,
+    'sub': 8834,
+    'sup': 8835,
+    'nsub': 8836,
+    'sube': 8838,
+    'supe': 8839,
+    'oplus': 8853,
+    'otimes': 8855,
+    'perp': 8869,
+    'sdot': 8901,
+    'lceil': 8968,
+    'rceil': 8969,
+    'lfloor': 8970,
+    'rfloor': 8971,
+    'lang': 9001,
+    'rang': 9002,
+    'loz': 9674,
+    'spades': 9824,
+    'clubs': 9827,
+    'hearts': 9829,
+    'diams': 9830
+  }
+
+  Object.keys(sax.ENTITIES).forEach(function (key) {
+    var e = sax.ENTITIES[key]
+    var s = typeof e === 'number' ? String.fromCharCode(e) : e
+    sax.ENTITIES[key] = s
+  })
+
+  for (var s in sax.STATE) {
+    sax.STATE[sax.STATE[s]] = s
+  }
+
+  // shorthand
+  S = sax.STATE
+
+  function emit (parser, event, data) {
+    parser[event] && parser[event](data)
+  }
+
+  function emitNode (parser, nodeType, data) {
+    if (parser.textNode) closeText(parser)
+    emit(parser, nodeType, data)
+  }
+
+  function closeText (parser) {
+    parser.textNode = textopts(parser.opt, parser.textNode)
+    if (parser.textNode) emit(parser, 'ontext', parser.textNode)
+    parser.textNode = ''
+  }
+
+  function textopts (opt, text) {
+    if (opt.trim) text = text.trim()
+    if (opt.normalize) text = text.replace(/\s+/g, ' ')
+    return text
+  }
+
+  function error (parser, er) {
+    closeText(parser)
+    if (parser.trackPosition) {
+      er += '\nLine: ' + parser.line +
+        '\nColumn: ' + parser.column +
+        '\nChar: ' + parser.c
+    }
+    er = new Error(er)
+    parser.error = er
+    emit(parser, 'onerror', er)
+    return parser
+  }
+
+  function end (parser) {
+    if (parser.sawRoot && !parser.closedRoot) strictFail(parser, 'Unclosed root tag')
+    if ((parser.state !== S.BEGIN) &&
+      (parser.state !== S.BEGIN_WHITESPACE) &&
+      (parser.state !== S.TEXT)) {
+      error(parser, 'Unexpected end')
+    }
+    closeText(parser)
+    parser.c = ''
+    parser.closed = true
+    emit(parser, 'onend')
+    SAXParser.call(parser, parser.strict, parser.opt)
+    return parser
+  }
+
+  function strictFail (parser, message) {
+    if (typeof parser !== 'object' || !(parser instanceof SAXParser)) {
+      throw new Error('bad call to strictFail')
+    }
+    if (parser.strict) {
+      error(parser, message)
+    }
+  }
+
+  function newTag (parser) {
+    if (!parser.strict) parser.tagName = parser.tagName[parser.looseCase]()
+    var parent = parser.tags[parser.tags.length - 1] || parser
+    var tag = parser.tag = { name: parser.tagName, attributes: {} }
+
+    // will be overridden if tag contails an xmlns="foo" or xmlns:foo="bar"
+    if (parser.opt.xmlns) {
+      tag.ns = parent.ns
+    }
+    parser.attribList.length = 0
+    emitNode(parser, 'onopentagstart', tag)
+  }
+
+  function qname (name, attribute) {
+    var i = name.indexOf(':')
+    var qualName = i < 0 ? [ '', name ] : name.split(':')
+    var prefix = qualName[0]
+    var local = qualName[1]
+
+    // <x "xmlns"="http://foo">
+    if (attribute && name === 'xmlns') {
+      prefix = 'xmlns'
+      local = ''
+    }
+
+    return { prefix: prefix, local: local }
+  }
+
+  function attrib (parser) {
+    if (!parser.strict) {
+      parser.attribName = parser.attribName[parser.looseCase]()
+    }
+
+    if (parser.attribList.indexOf(parser.attribName) !== -1 ||
+      parser.tag.attributes.hasOwnProperty(parser.attribName)) {
+      parser.attribName = parser.attribValue = ''
+      return
+    }
+
+    if (parser.opt.xmlns) {
+      var qn = qname(parser.attribName, true)
+      var prefix = qn.prefix
+      var local = qn.local
+
+      if (prefix === 'xmlns') {
+        // namespace binding attribute. push the binding into scope
+        if (local === 'xml' && parser.attribValue !== XML_NAMESPACE) {
+          strictFail(parser,
+            'xml: prefix must be bound to ' + XML_NAMESPACE + '\n' +
+            'Actual: ' + parser.attribValue)
+        } else if (local === 'xmlns' && parser.attribValue !== XMLNS_NAMESPACE) {
+          strictFail(parser,
+            'xmlns: prefix must be bound to ' + XMLNS_NAMESPACE + '\n' +
+            'Actual: ' + parser.attribValue)
+        } else {
+          var tag = parser.tag
+          var parent = parser.tags[parser.tags.length - 1] || parser
+          if (tag.ns === parent.ns) {
+            tag.ns = Object.create(parent.ns)
+          }
+          tag.ns[local] = parser.attribValue
+        }
+      }
+
+      // defer onattribute events until all attributes have been seen
+      // so any new bindings can take effect. preserve attribute order
+      // so deferred events can be emitted in document order
+      parser.attribList.push([parser.attribName, parser.attribValue])
+    } else {
+      // in non-xmlns mode, we can emit the event right away
+      parser.tag.attributes[parser.attribName] = parser.attribValue
+      emitNode(parser, 'onattribute', {
+        name: parser.attribName,
+        value: parser.attribValue
+      })
+    }
+
+    parser.attribName = parser.attribValue = ''
+  }
+
+  function openTag (parser, selfClosing) {
+    if (parser.opt.xmlns) {
+      // emit namespace binding events
+      var tag = parser.tag
+
+      // add namespace info to tag
+      var qn = qname(parser.tagName)
+      tag.prefix = qn.prefix
+      tag.local = qn.local
+      tag.uri = tag.ns[qn.prefix] || ''
+
+      if (tag.prefix && !tag.uri) {
+        strictFail(parser, 'Unbound namespace prefix: ' +
+          JSON.stringify(parser.tagName))
+        tag.uri = qn.prefix
+      }
+
+      var parent = parser.tags[parser.tags.length - 1] || parser
+      if (tag.ns && parent.ns !== tag.ns) {
+        Object.keys(tag.ns).forEach(function (p) {
+          emitNode(parser, 'onopennamespace', {
+            prefix: p,
+            uri: tag.ns[p]
+          })
+        })
+      }
+
+      // handle deferred onattribute events
+      // Note: do not apply default ns to attributes:
+      //   http://www.w3.org/TR/REC-xml-names/#defaulting
+      for (var i = 0, l = parser.attribList.length; i < l; i++) {
+        var nv = parser.attribList[i]
+        var name = nv[0]
+        var value = nv[1]
+        var qualName = qname(name, true)
+        var prefix = qualName.prefix
+        var local = qualName.local
+        var uri = prefix === '' ? '' : (tag.ns[prefix] || '')
+        var a = {
+          name: name,
+          value: value,
+          prefix: prefix,
+          local: local,
+          uri: uri
+        }
+
+        // if there's any attributes with an undefined namespace,
+        // then fail on them now.
+        if (prefix && prefix !== 'xmlns' && !uri) {
+          strictFail(parser, 'Unbound namespace prefix: ' +
+            JSON.stringify(prefix))
+          a.uri = prefix
+        }
+        parser.tag.attributes[name] = a
+        emitNode(parser, 'onattribute', a)
+      }
+      parser.attribList.length = 0
+    }
+
+    parser.tag.isSelfClosing = !!selfClosing
+
+    // process the tag
+    parser.sawRoot = true
+    parser.tags.push(parser.tag)
+    emitNode(parser, 'onopentag', parser.tag)
+    if (!selfClosing) {
+      // special case for <script> in non-strict mode.
+      if (!parser.noscript && parser.tagName.toLowerCase() === 'script') {
+        parser.state = S.SCRIPT
+      } else {
+        parser.state = S.TEXT
+      }
+      parser.tag = null
+      parser.tagName = ''
+    }
+    parser.attribName = parser.attribValue = ''
+    parser.attribList.length = 0
+  }
+
+  function closeTag (parser) {
+    if (!parser.tagName) {
+      strictFail(parser, 'Weird empty close tag.')
+      parser.textNode += '</>'
+      parser.state = S.TEXT
+      return
+    }
+
+    if (parser.script) {
+      if (parser.tagName !== 'script') {
+        parser.script += '</' + parser.tagName + '>'
+        parser.tagName = ''
+        parser.state = S.SCRIPT
+        return
+      }
+      emitNode(parser, 'onscript', parser.script)
+      parser.script = ''
+    }
+
+    // first make sure that the closing tag actually exists.
+    // <a><b></c></b></a> will close everything, otherwise.
+    var t = parser.tags.length
+    var tagName = parser.tagName
+    if (!parser.strict) {
+      tagName = tagName[parser.looseCase]()
+    }
+    var closeTo = tagName
+    while (t--) {
+      var close = parser.tags[t]
+      if (close.name !== closeTo) {
+        // fail the first time in strict mode
+        strictFail(parser, 'Unexpected close tag')
+      } else {
+        break
+      }
+    }
+
+    // didn't find it.  we already failed for strict, so just abort.
+    if (t < 0) {
+      strictFail(parser, 'Unmatched closing tag: ' + parser.tagName)
+      parser.textNode += '</' + parser.tagName + '>'
+      parser.state = S.TEXT
+      return
+    }
+    parser.tagName = tagName
+    var s = parser.tags.length
+    while (s-- > t) {
+      var tag = parser.tag = parser.tags.pop()
+      parser.tagName = parser.tag.name
+      emitNode(parser, 'onclosetag', parser.tagName)
+
+      var x = {}
+      for (var i in tag.ns) {
+        x[i] = tag.ns[i]
+      }
+
+      var parent = parser.tags[parser.tags.length - 1] || parser
+      if (parser.opt.xmlns && tag.ns !== parent.ns) {
+        // remove namespace bindings introduced by tag
+        Object.keys(tag.ns).forEach(function (p) {
+          var n = tag.ns[p]
+          emitNode(parser, 'onclosenamespace', { prefix: p, uri: n })
+        })
+      }
+    }
+    if (t === 0) parser.closedRoot = true
+    parser.tagName = parser.attribValue = parser.attribName = ''
+    parser.attribList.length = 0
+    parser.state = S.TEXT
+  }
+
+  function parseEntity (parser) {
+    var entity = parser.entity
+    var entityLC = entity.toLowerCase()
+    var num
+    var numStr = ''
+
+    if (parser.ENTITIES[entity]) {
+      return parser.ENTITIES[entity]
+    }
+    if (parser.ENTITIES[entityLC]) {
+      return parser.ENTITIES[entityLC]
+    }
+    entity = entityLC
+    if (entity.charAt(0) === '#') {
+      if (entity.charAt(1) === 'x') {
+        entity = entity.slice(2)
+        num = parseInt(entity, 16)
+        numStr = num.toString(16)
+      } else {
+        entity = entity.slice(1)
+        num = parseInt(entity, 10)
+        numStr = num.toString(10)
+      }
+    }
+    entity = entity.replace(/^0+/, '')
+    if (isNaN(num) || numStr.toLowerCase() !== entity) {
+      strictFail(parser, 'Invalid character entity')
+      return '&' + parser.entity + ';'
+    }
+
+    return String.fromCodePoint(num)
+  }
+
+  function beginWhiteSpace (parser, c) {
+    if (c === '<') {
+      parser.state = S.OPEN_WAKA
+      parser.startTagPosition = parser.position
+    } else if (!isWhitespace(c)) {
+      // have to process this as a text node.
+      // weird, but happens.
+      strictFail(parser, 'Non-whitespace before first tag.')
+      parser.textNode = c
+      parser.state = S.TEXT
+    }
+  }
+
+  function charAt (chunk, i) {
+    var result = ''
+    if (i < chunk.length) {
+      result = chunk.charAt(i)
+    }
+    return result
+  }
+
+  function write (chunk) {
+    var parser = this
+    if (this.error) {
+      throw this.error
+    }
+    if (parser.closed) {
+      return error(parser,
+        'Cannot write after close. Assign an onready handler.')
+    }
+    if (chunk === null) {
+      return end(parser)
+    }
+    if (typeof chunk === 'object') {
+      chunk = chunk.toString()
+    }
+    var i = 0
+    var c = ''
+    while (true) {
+      c = charAt(chunk, i++)
+      parser.c = c
+
+      if (!c) {
+        break
+      }
+
+      if (parser.trackPosition) {
+        parser.position++
+        if (c === '\n') {
+          parser.line++
+          parser.column = 0
+        } else {
+          parser.column++
+        }
+      }
+
+      switch (parser.state) {
+        case S.BEGIN:
+          parser.state = S.BEGIN_WHITESPACE
+          if (c === '\uFEFF') {
+            continue
+          }
+          beginWhiteSpace(parser, c)
+          continue
+
+        case S.BEGIN_WHITESPACE:
+          beginWhiteSpace(parser, c)
+          continue
+
+        case S.TEXT:
+          if (parser.sawRoot && !parser.closedRoot) {
+            var starti = i - 1
+            while (c && c !== '<' && c !== '&') {
+              c = charAt(chunk, i++)
+              if (c && parser.trackPosition) {
+                parser.position++
+                if (c === '\n') {
+                  parser.line++
+                  parser.column = 0
+                } else {
+                  parser.column++
+                }
+              }
+            }
+            parser.textNode += chunk.substring(starti, i - 1)
+          }
+          if (c === '<' && !(parser.sawRoot && parser.closedRoot && !parser.strict)) {
+            parser.state = S.OPEN_WAKA
+            parser.startTagPosition = parser.position
+          } else {
+            if (!isWhitespace(c) && (!parser.sawRoot || parser.closedRoot)) {
+              strictFail(parser, 'Text data outside of root node.')
+            }
+            if (c === '&') {
+              parser.state = S.TEXT_ENTITY
+            } else {
+              parser.textNode += c
+            }
+          }
+          continue
+
+        case S.SCRIPT:
+          // only non-strict
+          if (c === '<') {
+            parser.state = S.SCRIPT_ENDING
+          } else {
+            parser.script += c
+          }
+          continue
+
+        case S.SCRIPT_ENDING:
+          if (c === '/') {
+            parser.state = S.CLOSE_TAG
+          } else {
+            parser.script += '<' + c
+            parser.state = S.SCRIPT
+          }
+          continue
+
+        case S.OPEN_WAKA:
+          // either a /, ?, !, or text is coming next.
+          if (c === '!') {
+            parser.state = S.SGML_DECL
+            parser.sgmlDecl = ''
+          } else if (isWhitespace(c)) {
+            // wait for it...
+          } else if (isMatch(nameStart, c)) {
+            parser.state = S.OPEN_TAG
+            parser.tagName = c
+          } else if (c === '/') {
+            parser.state = S.CLOSE_TAG
+            parser.tagName = ''
+          } else if (c === '?') {
+            parser.state = S.PROC_INST
+            parser.procInstName = parser.procInstBody = ''
+          } else {
+            strictFail(parser, 'Unencoded <')
+            // if there was some whitespace, then add that in.
+            if (parser.startTagPosition + 1 < parser.position) {
+              var pad = parser.position - parser.startTagPosition
+              c = new Array(pad).join(' ') + c
+            }
+            parser.textNode += '<' + c
+            parser.state = S.TEXT
+          }
+          continue
+
+        case S.SGML_DECL:
+          if ((parser.sgmlDecl + c).toUpperCase() === CDATA) {
+            emitNode(parser, 'onopencdata')
+            parser.state = S.CDATA
+            parser.sgmlDecl = ''
+            parser.cdata = ''
+          } else if (parser.sgmlDecl + c === '--') {
+            parser.state = S.COMMENT
+            parser.comment = ''
+            parser.sgmlDecl = ''
+          } else if ((parser.sgmlDecl + c).toUpperCase() === DOCTYPE) {
+            parser.state = S.DOCTYPE
+            if (parser.doctype || parser.sawRoot) {
+              strictFail(parser,
+                'Inappropriately located doctype declaration')
+            }
+            parser.doctype = ''
+            parser.sgmlDecl = ''
+          } else if (c === '>') {
+            emitNode(parser, 'onsgmldeclaration', parser.sgmlDecl)
+            parser.sgmlDecl = ''
+            parser.state = S.TEXT
+          } else if (isQuote(c)) {
+            parser.state = S.SGML_DECL_QUOTED
+            parser.sgmlDecl += c
+          } else {
+            parser.sgmlDecl += c
+          }
+          continue
+
+        case S.SGML_DECL_QUOTED:
+          if (c === parser.q) {
+            parser.state = S.SGML_DECL
+            parser.q = ''
+          }
+          parser.sgmlDecl += c
+          continue
+
+        case S.DOCTYPE:
+          if (c === '>') {
+            parser.state = S.TEXT
+            emitNode(parser, 'ondoctype', parser.doctype)
+            parser.doctype = true // just remember that we saw it.
+          } else {
+            parser.doctype += c
+            if (c === '[') {
+              parser.state = S.DOCTYPE_DTD
+            } else if (isQuote(c)) {
+              parser.state = S.DOCTYPE_QUOTED
+              parser.q = c
+            }
+          }
+          continue
+
+        case S.DOCTYPE_QUOTED:
+          parser.doctype += c
+          if (c === parser.q) {
+            parser.q = ''
+            parser.state = S.DOCTYPE
+          }
+          continue
+
+        case S.DOCTYPE_DTD:
+          parser.doctype += c
+          if (c === ']') {
+            parser.state = S.DOCTYPE
+          } else if (isQuote(c)) {
+            parser.state = S.DOCTYPE_DTD_QUOTED
+            parser.q = c
+          }
+          continue
+
+        case S.DOCTYPE_DTD_QUOTED:
+          parser.doctype += c
+          if (c === parser.q) {
+            parser.state = S.DOCTYPE_DTD
+            parser.q = ''
+          }
+          continue
+
+        case S.COMMENT:
+          if (c === '-') {
+            parser.state = S.COMMENT_ENDING
+          } else {
+            parser.comment += c
+          }
+          continue
+
+        case S.COMMENT_ENDING:
+          if (c === '-') {
+            parser.state = S.COMMENT_ENDED
+            parser.comment = textopts(parser.opt, parser.comment)
+            if (parser.comment) {
+              emitNode(parser, 'oncomment', parser.comment)
+            }
+            parser.comment = ''
+          } else {
+            parser.comment += '-' + c
+            parser.state = S.COMMENT
+          }
+          continue
+
+        case S.COMMENT_ENDED:
+          if (c !== '>') {
+            strictFail(parser, 'Malformed comment')
+            // allow <!-- blah -- bloo --> in non-strict mode,
+            // which is a comment of " blah -- bloo "
+            parser.comment += '--' + c
+            parser.state = S.COMMENT
+          } else {
+            parser.state = S.TEXT
+          }
+          continue
+
+        case S.CDATA:
+          if (c === ']') {
+            parser.state = S.CDATA_ENDING
+          } else {
+            parser.cdata += c
+          }
+          continue
+
+        case S.CDATA_ENDING:
+          if (c === ']') {
+            parser.state = S.CDATA_ENDING_2
+          } else {
+            parser.cdata += ']' + c
+            parser.state = S.CDATA
+          }
+          continue
+
+        case S.CDATA_ENDING_2:
+          if (c === '>') {
+            if (parser.cdata) {
+              emitNode(parser, 'oncdata', parser.cdata)
+            }
+            emitNode(parser, 'onclosecdata')
+            parser.cdata = ''
+            parser.state = S.TEXT
+          } else if (c === ']') {
+            parser.cdata += ']'
+          } else {
+            parser.cdata += ']]' + c
+            parser.state = S.CDATA
+          }
+          continue
+
+        case S.PROC_INST:
+          if (c === '?') {
+            parser.state = S.PROC_INST_ENDING
+          } else if (isWhitespace(c)) {
+            parser.state = S.PROC_INST_BODY
+          } else {
+            parser.procInstName += c
+          }
+          continue
+
+        case S.PROC_INST_BODY:
+          if (!parser.procInstBody && isWhitespace(c)) {
+            continue
+          } else if (c === '?') {
+            parser.state = S.PROC_INST_ENDING
+          } else {
+            parser.procInstBody += c
+          }
+          continue
+
+        case S.PROC_INST_ENDING:
+          if (c === '>') {
+            emitNode(parser, 'onprocessinginstruction', {
+              name: parser.procInstName,
+              body: parser.procInstBody
+            })
+            parser.procInstName = parser.procInstBody = ''
+            parser.state = S.TEXT
+          } else {
+            parser.procInstBody += '?' + c
+            parser.state = S.PROC_INST_BODY
+          }
+          continue
+
+        case S.OPEN_TAG:
+          if (isMatch(nameBody, c)) {
+            parser.tagName += c
+          } else {
+            newTag(parser)
+            if (c === '>') {
+              openTag(parser)
+            } else if (c === '/') {
+              parser.state = S.OPEN_TAG_SLASH
+            } else {
+              if (!isWhitespace(c)) {
+                strictFail(parser, 'Invalid character in tag name')
+              }
+              parser.state = S.ATTRIB
+            }
+          }
+          continue
+
+        case S.OPEN_TAG_SLASH:
+          if (c === '>') {
+            openTag(parser, true)
+            closeTag(parser)
+          } else {
+            strictFail(parser, 'Forward-slash in opening tag not followed by >')
+            parser.state = S.ATTRIB
+          }
+          continue
+
+        case S.ATTRIB:
+          // haven't read the attribute name yet.
+          if (isWhitespace(c)) {
+            continue
+          } else if (c === '>') {
+            openTag(parser)
+          } else if (c === '/') {
+            parser.state = S.OPEN_TAG_SLASH
+          } else if (isMatch(nameStart, c)) {
+            parser.attribName = c
+            parser.attribValue = ''
+            parser.state = S.ATTRIB_NAME
+          } else {
+            strictFail(parser, 'Invalid attribute name')
+          }
+          continue
+
+        case S.ATTRIB_NAME:
+          if (c === '=') {
+            parser.state = S.ATTRIB_VALUE
+          } else if (c === '>') {
+            strictFail(parser, 'Attribute without value')
+            parser.attribValue = parser.attribName
+            attrib(parser)
+            openTag(parser)
+          } else if (isWhitespace(c)) {
+            parser.state = S.ATTRIB_NAME_SAW_WHITE
+          } else if (isMatch(nameBody, c)) {
+            parser.attribName += c
+          } else {
+            strictFail(parser, 'Invalid attribute name')
+          }
+          continue
+
+        case S.ATTRIB_NAME_SAW_WHITE:
+          if (c === '=') {
+            parser.state = S.ATTRIB_VALUE
+          } else if (isWhitespace(c)) {
+            continue
+          } else {
+            strictFail(parser, 'Attribute without value')
+            parser.tag.attributes[parser.attribName] = ''
+            parser.attribValue = ''
+            emitNode(parser, 'onattribute', {
+              name: parser.attribName,
+              value: ''
+            })
+            parser.attribName = ''
+            if (c === '>') {
+              openTag(parser)
+            } else if (isMatch(nameStart, c)) {
+              parser.attribName = c
+              parser.state = S.ATTRIB_NAME
+            } else {
+              strictFail(parser, 'Invalid attribute name')
+              parser.state = S.ATTRIB
+            }
+          }
+          continue
+
+        case S.ATTRIB_VALUE:
+          if (isWhitespace(c)) {
+            continue
+          } else if (isQuote(c)) {
+            parser.q = c
+            parser.state = S.ATTRIB_VALUE_QUOTED
+          } else {
+            strictFail(parser, 'Unquoted attribute value')
+            parser.state = S.ATTRIB_VALUE_UNQUOTED
+            parser.attribValue = c
+          }
+          continue
+
+        case S.ATTRIB_VALUE_QUOTED:
+          if (c !== parser.q) {
+            if (c === '&') {
+              parser.state = S.ATTRIB_VALUE_ENTITY_Q
+            } else {
+              parser.attribValue += c
+            }
+            continue
+          }
+          attrib(parser)
+          parser.q = ''
+          parser.state = S.ATTRIB_VALUE_CLOSED
+          continue
+
+        case S.ATTRIB_VALUE_CLOSED:
+          if (isWhitespace(c)) {
+            parser.state = S.ATTRIB
+          } else if (c === '>') {
+            openTag(parser)
+          } else if (c === '/') {
+            parser.state = S.OPEN_TAG_SLASH
+          } else if (isMatch(nameStart, c)) {
+            strictFail(parser, 'No whitespace between attributes')
+            parser.attribName = c
+            parser.attribValue = ''
+            parser.state = S.ATTRIB_NAME
+          } else {
+            strictFail(parser, 'Invalid attribute name')
+          }
+          continue
+
+        case S.ATTRIB_VALUE_UNQUOTED:
+          if (!isAttribEnd(c)) {
+            if (c === '&') {
+              parser.state = S.ATTRIB_VALUE_ENTITY_U
+            } else {
+              parser.attribValue += c
+            }
+            continue
+          }
+          attrib(parser)
+          if (c === '>') {
+            openTag(parser)
+          } else {
+            parser.state = S.ATTRIB
+          }
+          continue
+
+        case S.CLOSE_TAG:
+          if (!parser.tagName) {
+            if (isWhitespace(c)) {
+              continue
+            } else if (notMatch(nameStart, c)) {
+              if (parser.script) {
+                parser.script += '</' + c
+                parser.state = S.SCRIPT
+              } else {
+                strictFail(parser, 'Invalid tagname in closing tag.')
+              }
+            } else {
+              parser.tagName = c
+            }
+          } else if (c === '>') {
+            closeTag(parser)
+          } else if (isMatch(nameBody, c)) {
+            parser.tagName += c
+          } else if (parser.script) {
+            parser.script += '</' + parser.tagName
+            parser.tagName = ''
+            parser.state = S.SCRIPT
+          } else {
+            if (!isWhitespace(c)) {
+              strictFail(parser, 'Invalid tagname in closing tag')
+            }
+            parser.state = S.CLOSE_TAG_SAW_WHITE
+          }
+          continue
+
+        case S.CLOSE_TAG_SAW_WHITE:
+          if (isWhitespace(c)) {
+            continue
+          }
+          if (c === '>') {
+            closeTag(parser)
+          } else {
+            strictFail(parser, 'Invalid characters in closing tag')
+          }
+          continue
+
+        case S.TEXT_ENTITY:
+        case S.ATTRIB_VALUE_ENTITY_Q:
+        case S.ATTRIB_VALUE_ENTITY_U:
+          var returnState
+          var buffer
+          switch (parser.state) {
+            case S.TEXT_ENTITY:
+              returnState = S.TEXT
+              buffer = 'textNode'
+              break
+
+            case S.ATTRIB_VALUE_ENTITY_Q:
+              returnState = S.ATTRIB_VALUE_QUOTED
+              buffer = 'attribValue'
+              break
+
+            case S.ATTRIB_VALUE_ENTITY_U:
+              returnState = S.ATTRIB_VALUE_UNQUOTED
+              buffer = 'attribValue'
+              break
+          }
+
+          if (c === ';') {
+            parser[buffer] += parseEntity(parser)
+            parser.entity = ''
+            parser.state = returnState
+          } else if (isMatch(parser.entity.length ? entityBody : entityStart, c)) {
+            parser.entity += c
+          } else {
+            strictFail(parser, 'Invalid character in entity name')
+            parser[buffer] += '&' + parser.entity + c
+            parser.entity = ''
+            parser.state = returnState
+          }
+
+          continue
+
+        default:
+          throw new Error(parser, 'Unknown state: ' + parser.state)
+      }
+    } // while
+
+    if (parser.position >= parser.bufferCheckPosition) {
+      checkBufferLength(parser)
+    }
+    return parser
+  }
+
+  /*! http://mths.be/fromcodepoint v0.1.0 by @mathias */
+  /* istanbul ignore next */
+  if (!String.fromCodePoint) {
+    (function () {
+      var stringFromCharCode = String.fromCharCode
+      var floor = Math.floor
+      var fromCodePoint = function () {
+        var MAX_SIZE = 0x4000
+        var codeUnits = []
+        var highSurrogate
+        var lowSurrogate
+        var index = -1
+        var length = arguments.length
+        if (!length) {
+          return ''
+        }
+        var result = ''
+        while (++index < length) {
+          var codePoint = Number(arguments[index])
+          if (
+            !isFinite(codePoint) || // `NaN`, `+Infinity`, or `-Infinity`
+            codePoint < 0 || // not a valid Unicode code point
+            codePoint > 0x10FFFF || // not a valid Unicode code point
+            floor(codePoint) !== codePoint // not an integer
+          ) {
+            throw RangeError('Invalid code point: ' + codePoint)
+          }
+          if (codePoint <= 0xFFFF) { // BMP code point
+            codeUnits.push(codePoint)
+          } else { // Astral code point; split in surrogate halves
+            // http://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
+            codePoint -= 0x10000
+            highSurrogate = (codePoint >> 10) + 0xD800
+            lowSurrogate = (codePoint % 0x400) + 0xDC00
+            codeUnits.push(highSurrogate, lowSurrogate)
+          }
+          if (index + 1 === length || codeUnits.length > MAX_SIZE) {
+            result += stringFromCharCode.apply(null, codeUnits)
+            codeUnits.length = 0
+          }
+        }
+        return result
+      }
+      /* istanbul ignore next */
+      if (Object.defineProperty) {
+        Object.defineProperty(String, 'fromCodePoint', {
+          value: fromCodePoint,
+          configurable: true,
+          writable: true
+        })
+      } else {
+        String.fromCodePoint = fromCodePoint
+      }
+    }())
+  }
+})( false ? 0 : exports)
+
+
+/***/ }),
+
+/***/ 2414:
+/***/ ((module) => {
+
+// Copyright (C) 2011 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @fileoverview Install a leaky WeakMap emulation on platforms that
+ * don't provide a built-in one.
+ *
+ * <p>Assumes that an ES5 platform where, if {@code WeakMap} is
+ * already present, then it conforms to the anticipated ES6
+ * specification. To run this file on an ES5 or almost ES5
+ * implementation where the {@code WeakMap} specification does not
+ * quite conform, run <code>repairES5.js</code> first.
+ *
+ * <p>Even though WeakMapModule is not global, the linter thinks it
+ * is, which is why it is in the overrides list below.
+ *
+ * <p>NOTE: Before using this WeakMap emulation in a non-SES
+ * environment, see the note below about hiddenRecord.
+ *
+ * @author Mark S. Miller
+ * @requires crypto, ArrayBuffer, Uint8Array, navigator, console
+ * @overrides WeakMap, ses, Proxy
+ * @overrides WeakMapModule
+ */
+
+/**
+ * This {@code WeakMap} emulation is observably equivalent to the
+ * ES-Harmony WeakMap, but with leakier garbage collection properties.
+ *
+ * <p>As with true WeakMaps, in this emulation, a key does not
+ * retain maps indexed by that key and (crucially) a map does not
+ * retain the keys it indexes. A map by itself also does not retain
+ * the values associated with that map.
+ *
+ * <p>However, the values associated with a key in some map are
+ * retained so long as that key is retained and those associations are
+ * not overridden. For example, when used to support membranes, all
+ * values exported from a given membrane will live for the lifetime
+ * they would have had in the absence of an interposed membrane. Even
+ * when the membrane is revoked, all objects that would have been
+ * reachable in the absence of revocation will still be reachable, as
+ * far as the GC can tell, even though they will no longer be relevant
+ * to ongoing computation.
+ *
+ * <p>The API implemented here is approximately the API as implemented
+ * in FF6.0a1 and agreed to by MarkM, Andreas Gal, and Dave Herman,
+ * rather than the offially approved proposal page. TODO(erights):
+ * upgrade the ecmascript WeakMap proposal page to explain this API
+ * change and present to EcmaScript committee for their approval.
+ *
+ * <p>The first difference between the emulation here and that in
+ * FF6.0a1 is the presence of non enumerable {@code get___, has___,
+ * set___, and delete___} methods on WeakMap instances to represent
+ * what would be the hidden internal properties of a primitive
+ * implementation. Whereas the FF6.0a1 WeakMap.prototype methods
+ * require their {@code this} to be a genuine WeakMap instance (i.e.,
+ * an object of {@code [[Class]]} "WeakMap}), since there is nothing
+ * unforgeable about the pseudo-internal method names used here,
+ * nothing prevents these emulated prototype methods from being
+ * applied to non-WeakMaps with pseudo-internal methods of the same
+ * names.
+ *
+ * <p>Another difference is that our emulated {@code
+ * WeakMap.prototype} is not itself a WeakMap. A problem with the
+ * current FF6.0a1 API is that WeakMap.prototype is itself a WeakMap
+ * providing ambient mutability and an ambient communications
+ * channel. Thus, if a WeakMap is already present and has this
+ * problem, repairES5.js wraps it in a safe wrappper in order to
+ * prevent access to this channel. (See
+ * PATCH_MUTABLE_FROZEN_WEAKMAP_PROTO in repairES5.js).
+ */
+
+/**
+ * If this is a full <a href=
+ * "http://code.google.com/p/es-lab/wiki/SecureableES5"
+ * >secureable ES5</a> platform and the ES-Harmony {@code WeakMap} is
+ * absent, install an approximate emulation.
+ *
+ * <p>If WeakMap is present but cannot store some objects, use our approximate
+ * emulation as a wrapper.
+ *
+ * <p>If this is almost a secureable ES5 platform, then WeakMap.js
+ * should be run after repairES5.js.
+ *
+ * <p>See {@code WeakMap} for documentation of the garbage collection
+ * properties of this WeakMap emulation.
+ */
+(function WeakMapModule() {
+  "use strict";
+
+  if (typeof ses !== 'undefined' && ses.ok && !ses.ok()) {
+    // already too broken, so give up
+    return;
+  }
+
+  /**
+   * In some cases (current Firefox), we must make a choice betweeen a
+   * WeakMap which is capable of using all varieties of host objects as
+   * keys and one which is capable of safely using proxies as keys. See
+   * comments below about HostWeakMap and DoubleWeakMap for details.
+   *
+   * This function (which is a global, not exposed to guests) marks a
+   * WeakMap as permitted to do what is necessary to index all host
+   * objects, at the cost of making it unsafe for proxies.
+   *
+   * Do not apply this function to anything which is not a genuine
+   * fresh WeakMap.
+   */
+  function weakMapPermitHostObjects(map) {
+    // identity of function used as a secret -- good enough and cheap
+    if (map.permitHostObjects___) {
+      map.permitHostObjects___(weakMapPermitHostObjects);
+    }
+  }
+  if (typeof ses !== 'undefined') {
+    ses.weakMapPermitHostObjects = weakMapPermitHostObjects;
+  }
+
+  // IE 11 has no Proxy but has a broken WeakMap such that we need to patch
+  // it using DoubleWeakMap; this flag tells DoubleWeakMap so.
+  var doubleWeakMapCheckSilentFailure = false;
+
+  // Check if there is already a good-enough WeakMap implementation, and if so
+  // exit without replacing it.
+  if (typeof WeakMap === 'function') {
+    var HostWeakMap = WeakMap;
+    // There is a WeakMap -- is it good enough?
+    if (typeof navigator !== 'undefined' &&
+        /Firefox/.test(navigator.userAgent)) {
+      // We're now *assuming not*, because as of this writing (2013-05-06)
+      // Firefox's WeakMaps have a miscellany of objects they won't accept, and
+      // we don't want to make an exhaustive list, and testing for just one
+      // will be a problem if that one is fixed alone (as they did for Event).
+
+      // If there is a platform that we *can* reliably test on, here's how to
+      // do it:
+      //  var problematic = ... ;
+      //  var testHostMap = new HostWeakMap();
+      //  try {
+      //    testHostMap.set(problematic, 1);  // Firefox 20 will throw here
+      //    if (testHostMap.get(problematic) === 1) {
+      //      return;
+      //    }
+      //  } catch (e) {}
+
+    } else {
+      // IE 11 bug: WeakMaps silently fail to store frozen objects.
+      var testMap = new HostWeakMap();
+      var testObject = Object.freeze({});
+      testMap.set(testObject, 1);
+      if (testMap.get(testObject) !== 1) {
+        doubleWeakMapCheckSilentFailure = true;
+        // Fall through to installing our WeakMap.
+      } else {
+        module.exports = WeakMap;
+        return;
+      }
+    }
+  }
+
+  var hop = Object.prototype.hasOwnProperty;
+  var gopn = Object.getOwnPropertyNames;
+  var defProp = Object.defineProperty;
+  var isExtensible = Object.isExtensible;
+
+  /**
+   * Security depends on HIDDEN_NAME being both <i>unguessable</i> and
+   * <i>undiscoverable</i> by untrusted code.
+   *
+   * <p>Given the known weaknesses of Math.random() on existing
+   * browsers, it does not generate unguessability we can be confident
+   * of.
+   *
+   * <p>It is the monkey patching logic in this file that is intended
+   * to ensure undiscoverability. The basic idea is that there are
+   * three fundamental means of discovering properties of an object:
+   * The for/in loop, Object.keys(), and Object.getOwnPropertyNames(),
+   * as well as some proposed ES6 extensions that appear on our
+   * whitelist. The first two only discover enumerable properties, and
+   * we only use HIDDEN_NAME to name a non-enumerable property, so the
+   * only remaining threat should be getOwnPropertyNames and some
+   * proposed ES6 extensions that appear on our whitelist. We monkey
+   * patch them to remove HIDDEN_NAME from the list of properties they
+   * returns.
+   *
+   * <p>TODO(erights): On a platform with built-in Proxies, proxies
+   * could be used to trap and thereby discover the HIDDEN_NAME, so we
+   * need to monkey patch Proxy.create, Proxy.createFunction, etc, in
+   * order to wrap the provided handler with the real handler which
+   * filters out all traps using HIDDEN_NAME.
+   *
+   * <p>TODO(erights): Revisit Mike Stay's suggestion that we use an
+   * encapsulated function at a not-necessarily-secret name, which
+   * uses the Stiegler shared-state rights amplification pattern to
+   * reveal the associated value only to the WeakMap in which this key
+   * is associated with that value. Since only the key retains the
+   * function, the function can also remember the key without causing
+   * leakage of the key, so this doesn't violate our general gc
+   * goals. In addition, because the name need not be a guarded
+   * secret, we could efficiently handle cross-frame frozen keys.
+   */
+  var HIDDEN_NAME_PREFIX = 'weakmap:';
+  var HIDDEN_NAME = HIDDEN_NAME_PREFIX + 'ident:' + Math.random() + '___';
+
+  if (typeof crypto !== 'undefined' &&
+      typeof crypto.getRandomValues === 'function' &&
+      typeof ArrayBuffer === 'function' &&
+      typeof Uint8Array === 'function') {
+    var ab = new ArrayBuffer(25);
+    var u8s = new Uint8Array(ab);
+    crypto.getRandomValues(u8s);
+    HIDDEN_NAME = HIDDEN_NAME_PREFIX + 'rand:' +
+      Array.prototype.map.call(u8s, function(u8) {
+        return (u8 % 36).toString(36);
+      }).join('') + '___';
+  }
+
+  function isNotHiddenName(name) {
+    return !(
+        name.substr(0, HIDDEN_NAME_PREFIX.length) == HIDDEN_NAME_PREFIX &&
+        name.substr(name.length - 3) === '___');
+  }
+
+  /**
+   * Monkey patch getOwnPropertyNames to avoid revealing the
+   * HIDDEN_NAME.
+   *
+   * <p>The ES5.1 spec requires each name to appear only once, but as
+   * of this writing, this requirement is controversial for ES6, so we
+   * made this code robust against this case. If the resulting extra
+   * search turns out to be expensive, we can probably relax this once
+   * ES6 is adequately supported on all major browsers, iff no browser
+   * versions we support at that time have relaxed this constraint
+   * without providing built-in ES6 WeakMaps.
+   */
+  defProp(Object, 'getOwnPropertyNames', {
+    value: function fakeGetOwnPropertyNames(obj) {
+      return gopn(obj).filter(isNotHiddenName);
+    }
+  });
+
+  /**
+   * getPropertyNames is not in ES5 but it is proposed for ES6 and
+   * does appear in our whitelist, so we need to clean it too.
+   */
+  if ('getPropertyNames' in Object) {
+    var originalGetPropertyNames = Object.getPropertyNames;
+    defProp(Object, 'getPropertyNames', {
+      value: function fakeGetPropertyNames(obj) {
+        return originalGetPropertyNames(obj).filter(isNotHiddenName);
+      }
+    });
+  }
+
+  /**
+   * <p>To treat objects as identity-keys with reasonable efficiency
+   * on ES5 by itself (i.e., without any object-keyed collections), we
+   * need to add a hidden property to such key objects when we
+   * can. This raises several issues:
+   * <ul>
+   * <li>Arranging to add this property to objects before we lose the
+   *     chance, and
+   * <li>Hiding the existence of this new property from most
+   *     JavaScript code.
+   * <li>Preventing <i>certification theft</i>, where one object is
+   *     created falsely claiming to be the key of an association
+   *     actually keyed by another object.
+   * <li>Preventing <i>value theft</i>, where untrusted code with
+   *     access to a key object but not a weak map nevertheless
+   *     obtains access to the value associated with that key in that
+   *     weak map.
+   * </ul>
+   * We do so by
+   * <ul>
+   * <li>Making the name of the hidden property unguessable, so "[]"
+   *     indexing, which we cannot intercept, cannot be used to access
+   *     a property without knowing the name.
+   * <li>Making the hidden property non-enumerable, so we need not
+   *     worry about for-in loops or {@code Object.keys},
+   * <li>monkey patching those reflective methods that would
+   *     prevent extensions, to add this hidden property first,
+   * <li>monkey patching those methods that would reveal this
+   *     hidden property.
+   * </ul>
+   * Unfortunately, because of same-origin iframes, we cannot reliably
+   * add this hidden property before an object becomes
+   * non-extensible. Instead, if we encounter a non-extensible object
+   * without a hidden record that we can detect (whether or not it has
+   * a hidden record stored under a name secret to us), then we just
+   * use the key object itself to represent its identity in a brute
+   * force leaky map stored in the weak map, losing all the advantages
+   * of weakness for these.
+   */
+  function getHiddenRecord(key) {
+    if (key !== Object(key)) {
+      throw new TypeError('Not an object: ' + key);
+    }
+    var hiddenRecord = key[HIDDEN_NAME];
+    if (hiddenRecord && hiddenRecord.key === key) { return hiddenRecord; }
+    if (!isExtensible(key)) {
+      // Weak map must brute force, as explained in doc-comment above.
+      return void 0;
+    }
+
+    // The hiddenRecord and the key point directly at each other, via
+    // the "key" and HIDDEN_NAME properties respectively. The key
+    // field is for quickly verifying that this hidden record is an
+    // own property, not a hidden record from up the prototype chain.
+    //
+    // NOTE: Because this WeakMap emulation is meant only for systems like
+    // SES where Object.prototype is frozen without any numeric
+    // properties, it is ok to use an object literal for the hiddenRecord.
+    // This has two advantages:
+    // * It is much faster in a performance critical place
+    // * It avoids relying on Object.create(null), which had been
+    //   problematic on Chrome 28.0.1480.0. See
+    //   https://code.google.com/p/google-caja/issues/detail?id=1687
+    hiddenRecord = { key: key };
+
+    // When using this WeakMap emulation on platforms where
+    // Object.prototype might not be frozen and Object.create(null) is
+    // reliable, use the following two commented out lines instead.
+    // hiddenRecord = Object.create(null);
+    // hiddenRecord.key = key;
+
+    // Please contact us if you need this to work on platforms where
+    // Object.prototype might not be frozen and
+    // Object.create(null) might not be reliable.
+
+    try {
+      defProp(key, HIDDEN_NAME, {
+        value: hiddenRecord,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      return hiddenRecord;
+    } catch (error) {
+      // Under some circumstances, isExtensible seems to misreport whether
+      // the HIDDEN_NAME can be defined.
+      // The circumstances have not been isolated, but at least affect
+      // Node.js v0.10.26 on TravisCI / Linux, but not the same version of
+      // Node.js on OS X.
+      return void 0;
+    }
+  }
+
+  /**
+   * Monkey patch operations that would make their argument
+   * non-extensible.
+   *
+   * <p>The monkey patched versions throw a TypeError if their
+   * argument is not an object, so it should only be done to functions
+   * that should throw a TypeError anyway if their argument is not an
+   * object.
+   */
+  (function(){
+    var oldFreeze = Object.freeze;
+    defProp(Object, 'freeze', {
+      value: function identifyingFreeze(obj) {
+        getHiddenRecord(obj);
+        return oldFreeze(obj);
+      }
+    });
+    var oldSeal = Object.seal;
+    defProp(Object, 'seal', {
+      value: function identifyingSeal(obj) {
+        getHiddenRecord(obj);
+        return oldSeal(obj);
+      }
+    });
+    var oldPreventExtensions = Object.preventExtensions;
+    defProp(Object, 'preventExtensions', {
+      value: function identifyingPreventExtensions(obj) {
+        getHiddenRecord(obj);
+        return oldPreventExtensions(obj);
+      }
+    });
+  })();
+
+  function constFunc(func) {
+    func.prototype = null;
+    return Object.freeze(func);
+  }
+
+  var calledAsFunctionWarningDone = false;
+  function calledAsFunctionWarning() {
+    // Future ES6 WeakMap is currently (2013-09-10) expected to reject WeakMap()
+    // but we used to permit it and do it ourselves, so warn only.
+    if (!calledAsFunctionWarningDone && typeof console !== 'undefined') {
+      calledAsFunctionWarningDone = true;
+      console.warn('WeakMap should be invoked as new WeakMap(), not ' +
+          'WeakMap(). This will be an error in the future.');
+    }
+  }
+
+  var nextId = 0;
+
+  var OurWeakMap = function() {
+    if (!(this instanceof OurWeakMap)) {  // approximate test for new ...()
+      calledAsFunctionWarning();
+    }
+
+    // We are currently (12/25/2012) never encountering any prematurely
+    // non-extensible keys.
+    var keys = []; // brute force for prematurely non-extensible keys.
+    var values = []; // brute force for corresponding values.
+    var id = nextId++;
+
+    function get___(key, opt_default) {
+      var index;
+      var hiddenRecord = getHiddenRecord(key);
+      if (hiddenRecord) {
+        return id in hiddenRecord ? hiddenRecord[id] : opt_default;
+      } else {
+        index = keys.indexOf(key);
+        return index >= 0 ? values[index] : opt_default;
+      }
+    }
+
+    function has___(key) {
+      var hiddenRecord = getHiddenRecord(key);
+      if (hiddenRecord) {
+        return id in hiddenRecord;
+      } else {
+        return keys.indexOf(key) >= 0;
+      }
+    }
+
+    function set___(key, value) {
+      var index;
+      var hiddenRecord = getHiddenRecord(key);
+      if (hiddenRecord) {
+        hiddenRecord[id] = value;
+      } else {
+        index = keys.indexOf(key);
+        if (index >= 0) {
+          values[index] = value;
+        } else {
+          // Since some browsers preemptively terminate slow turns but
+          // then continue computing with presumably corrupted heap
+          // state, we here defensively get keys.length first and then
+          // use it to update both the values and keys arrays, keeping
+          // them in sync.
+          index = keys.length;
+          values[index] = value;
+          // If we crash here, values will be one longer than keys.
+          keys[index] = key;
+        }
+      }
+      return this;
+    }
+
+    function delete___(key) {
+      var hiddenRecord = getHiddenRecord(key);
+      var index, lastIndex;
+      if (hiddenRecord) {
+        return id in hiddenRecord && delete hiddenRecord[id];
+      } else {
+        index = keys.indexOf(key);
+        if (index < 0) {
+          return false;
+        }
+        // Since some browsers preemptively terminate slow turns but
+        // then continue computing with potentially corrupted heap
+        // state, we here defensively get keys.length first and then use
+        // it to update both the keys and the values array, keeping
+        // them in sync. We update the two with an order of assignments,
+        // such that any prefix of these assignments will preserve the
+        // key/value correspondence, either before or after the delete.
+        // Note that this needs to work correctly when index === lastIndex.
+        lastIndex = keys.length - 1;
+        keys[index] = void 0;
+        // If we crash here, there's a void 0 in the keys array, but
+        // no operation will cause a "keys.indexOf(void 0)", since
+        // getHiddenRecord(void 0) will always throw an error first.
+        values[index] = values[lastIndex];
+        // If we crash here, values[index] cannot be found here,
+        // because keys[index] is void 0.
+        keys[index] = keys[lastIndex];
+        // If index === lastIndex and we crash here, then keys[index]
+        // is still void 0, since the aliasing killed the previous key.
+        keys.length = lastIndex;
+        // If we crash here, keys will be one shorter than values.
+        values.length = lastIndex;
+        return true;
+      }
+    }
+
+    return Object.create(OurWeakMap.prototype, {
+      get___:    { value: constFunc(get___) },
+      has___:    { value: constFunc(has___) },
+      set___:    { value: constFunc(set___) },
+      delete___: { value: constFunc(delete___) }
+    });
+  };
+
+  OurWeakMap.prototype = Object.create(Object.prototype, {
+    get: {
+      /**
+       * Return the value most recently associated with key, or
+       * opt_default if none.
+       */
+      value: function get(key, opt_default) {
+        return this.get___(key, opt_default);
+      },
+      writable: true,
+      configurable: true
+    },
+
+    has: {
+      /**
+       * Is there a value associated with key in this WeakMap?
+       */
+      value: function has(key) {
+        return this.has___(key);
+      },
+      writable: true,
+      configurable: true
+    },
+
+    set: {
+      /**
+       * Associate value with key in this WeakMap, overwriting any
+       * previous association if present.
+       */
+      value: function set(key, value) {
+        return this.set___(key, value);
+      },
+      writable: true,
+      configurable: true
+    },
+
+    'delete': {
+      /**
+       * Remove any association for key in this WeakMap, returning
+       * whether there was one.
+       *
+       * <p>Note that the boolean return here does not work like the
+       * {@code delete} operator. The {@code delete} operator returns
+       * whether the deletion succeeds at bringing about a state in
+       * which the deleted property is absent. The {@code delete}
+       * operator therefore returns true if the property was already
+       * absent, whereas this {@code delete} method returns false if
+       * the association was already absent.
+       */
+      value: function remove(key) {
+        return this.delete___(key);
+      },
+      writable: true,
+      configurable: true
+    }
+  });
+
+  if (typeof HostWeakMap === 'function') {
+    (function() {
+      // If we got here, then the platform has a WeakMap but we are concerned
+      // that it may refuse to store some key types. Therefore, make a map
+      // implementation which makes use of both as possible.
+
+      // In this mode we are always using double maps, so we are not proxy-safe.
+      // This combination does not occur in any known browser, but we had best
+      // be safe.
+      if (doubleWeakMapCheckSilentFailure && typeof Proxy !== 'undefined') {
+        Proxy = undefined;
+      }
+
+      function DoubleWeakMap() {
+        if (!(this instanceof OurWeakMap)) {  // approximate test for new ...()
+          calledAsFunctionWarning();
+        }
+
+        // Preferable, truly weak map.
+        var hmap = new HostWeakMap();
+
+        // Our hidden-property-based pseudo-weak-map. Lazily initialized in the
+        // 'set' implementation; thus we can avoid performing extra lookups if
+        // we know all entries actually stored are entered in 'hmap'.
+        var omap = undefined;
+
+        // Hidden-property maps are not compatible with proxies because proxies
+        // can observe the hidden name and either accidentally expose it or fail
+        // to allow the hidden property to be set. Therefore, we do not allow
+        // arbitrary WeakMaps to switch to using hidden properties, but only
+        // those which need the ability, and unprivileged code is not allowed
+        // to set the flag.
+        //
+        // (Except in doubleWeakMapCheckSilentFailure mode in which case we
+        // disable proxies.)
+        var enableSwitching = false;
+
+        function dget(key, opt_default) {
+          if (omap) {
+            return hmap.has(key) ? hmap.get(key)
+                : omap.get___(key, opt_default);
+          } else {
+            return hmap.get(key, opt_default);
+          }
+        }
+
+        function dhas(key) {
+          return hmap.has(key) || (omap ? omap.has___(key) : false);
+        }
+
+        var dset;
+        if (doubleWeakMapCheckSilentFailure) {
+          dset = function(key, value) {
+            hmap.set(key, value);
+            if (!hmap.has(key)) {
+              if (!omap) { omap = new OurWeakMap(); }
+              omap.set(key, value);
+            }
+            return this;
+          };
+        } else {
+          dset = function(key, value) {
+            if (enableSwitching) {
+              try {
+                hmap.set(key, value);
+              } catch (e) {
+                if (!omap) { omap = new OurWeakMap(); }
+                omap.set___(key, value);
+              }
+            } else {
+              hmap.set(key, value);
+            }
+            return this;
+          };
+        }
+
+        function ddelete(key) {
+          var result = !!hmap['delete'](key);
+          if (omap) { return omap.delete___(key) || result; }
+          return result;
+        }
+
+        return Object.create(OurWeakMap.prototype, {
+          get___:    { value: constFunc(dget) },
+          has___:    { value: constFunc(dhas) },
+          set___:    { value: constFunc(dset) },
+          delete___: { value: constFunc(ddelete) },
+          permitHostObjects___: { value: constFunc(function(token) {
+            if (token === weakMapPermitHostObjects) {
+              enableSwitching = true;
+            } else {
+              throw new Error('bogus call to permitHostObjects___');
+            }
+          })}
+        });
+      }
+      DoubleWeakMap.prototype = OurWeakMap.prototype;
+      module.exports = DoubleWeakMap;
+
+      // define .constructor to hide OurWeakMap ctor
+      Object.defineProperty(WeakMap.prototype, 'constructor', {
+        value: WeakMap,
+        enumerable: false,  // as default .constructor is
+        configurable: true,
+        writable: true
+      });
+    })();
+  } else {
+    // There is no host WeakMap, so we must use the emulation.
+
+    // Emulated WeakMaps are incompatible with native proxies (because proxies
+    // can observe the hidden name), so we must disable Proxy usage (in
+    // ArrayLike and Domado, currently).
+    if (typeof Proxy !== 'undefined') {
+      Proxy = undefined;
+    }
+
+    module.exports = OurWeakMap;
+  }
+})();
+
+
+/***/ }),
+
+/***/ 2940:
 /***/ ((module) => {
 
 // Returns a wrapper function that returns a wrapped callback
@@ -3807,21 +10784,863 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 907:
+/***/ 1709:
+/***/ ((module) => {
+
+module.exports = {
+
+  isArray: function(value) {
+    if (Array.isArray) {
+      return Array.isArray(value);
+    }
+    // fallback for older browsers like  IE 8
+    return Object.prototype.toString.call( value ) === '[object Array]';
+  }
+
+};
+
+
+/***/ }),
+
+/***/ 8821:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var glob = __webpack_require__(957);
-var path = __webpack_require__(622);
+/*jslint node:true */
 
-let split = function (directoryPath, nodeIndex, nodeTotal, filesToExlude = []) {
-  verify(directoryPath, nodeIndex, nodeTotal, filesToExlude);
+var xml2js = __webpack_require__(2903);
+var xml2json = __webpack_require__(8919);
+var js2xml = __webpack_require__(4453);
+var json2xml = __webpack_require__(1900);
+
+module.exports = {
+  xml2js: xml2js,
+  xml2json: xml2json,
+  js2xml: js2xml,
+  json2xml: json2xml
+};
+
+
+/***/ }),
+
+/***/ 4453:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var helper = __webpack_require__(6717);
+var isArray = __webpack_require__(1709).isArray;
+
+var currentElement, currentElementName;
+
+function validateOptions(userOptions) {
+  var options = helper.copyOptions(userOptions);
+  helper.ensureFlagExists('ignoreDeclaration', options);
+  helper.ensureFlagExists('ignoreInstruction', options);
+  helper.ensureFlagExists('ignoreAttributes', options);
+  helper.ensureFlagExists('ignoreText', options);
+  helper.ensureFlagExists('ignoreComment', options);
+  helper.ensureFlagExists('ignoreCdata', options);
+  helper.ensureFlagExists('ignoreDoctype', options);
+  helper.ensureFlagExists('compact', options);
+  helper.ensureFlagExists('indentText', options);
+  helper.ensureFlagExists('indentCdata', options);
+  helper.ensureFlagExists('indentAttributes', options);
+  helper.ensureFlagExists('indentInstruction', options);
+  helper.ensureFlagExists('fullTagEmptyElement', options);
+  helper.ensureFlagExists('noQuotesForNativeAttributes', options);
+  helper.ensureSpacesExists(options);
+  if (typeof options.spaces === 'number') {
+    options.spaces = Array(options.spaces + 1).join(' ');
+  }
+  helper.ensureKeyExists('declaration', options);
+  helper.ensureKeyExists('instruction', options);
+  helper.ensureKeyExists('attributes', options);
+  helper.ensureKeyExists('text', options);
+  helper.ensureKeyExists('comment', options);
+  helper.ensureKeyExists('cdata', options);
+  helper.ensureKeyExists('doctype', options);
+  helper.ensureKeyExists('type', options);
+  helper.ensureKeyExists('name', options);
+  helper.ensureKeyExists('elements', options);
+  helper.checkFnExists('doctype', options);
+  helper.checkFnExists('instruction', options);
+  helper.checkFnExists('cdata', options);
+  helper.checkFnExists('comment', options);
+  helper.checkFnExists('text', options);
+  helper.checkFnExists('instructionName', options);
+  helper.checkFnExists('elementName', options);
+  helper.checkFnExists('attributeName', options);
+  helper.checkFnExists('attributeValue', options);
+  helper.checkFnExists('attributes', options);
+  helper.checkFnExists('fullTagEmptyElement', options);
+  return options;
+}
+
+function writeIndentation(options, depth, firstLine) {
+  return (!firstLine && options.spaces ? '\n' : '') + Array(depth + 1).join(options.spaces);
+}
+
+function writeAttributes(attributes, options, depth) {
+  if (options.ignoreAttributes) {
+    return '';
+  }
+  if ('attributesFn' in options) {
+    attributes = options.attributesFn(attributes, currentElementName, currentElement);
+  }
+  var key, attr, attrName, quote, result = [];
+  for (key in attributes) {
+    if (attributes.hasOwnProperty(key) && attributes[key] !== null && attributes[key] !== undefined) {
+      quote = options.noQuotesForNativeAttributes && typeof attributes[key] !== 'string' ? '' : '"';
+      attr = '' + attributes[key]; // ensure number and boolean are converted to String
+      attr = attr.replace(/"/g, '&quot;');
+      attrName = 'attributeNameFn' in options ? options.attributeNameFn(key, attr, currentElementName, currentElement) : key;
+      result.push((options.spaces && options.indentAttributes? writeIndentation(options, depth+1, false) : ' '));
+      result.push(attrName + '=' + quote + ('attributeValueFn' in options ? options.attributeValueFn(attr, key, currentElementName, currentElement) : attr) + quote);
+    }
+  }
+  if (attributes && Object.keys(attributes).length && options.spaces && options.indentAttributes) {
+    result.push(writeIndentation(options, depth, false));
+  }
+  return result.join('');
+}
+
+function writeDeclaration(declaration, options, depth) {
+  currentElement = declaration;
+  currentElementName = 'xml';
+  return options.ignoreDeclaration ? '' :  '<?' + 'xml' + writeAttributes(declaration[options.attributesKey], options, depth) + '?>';
+}
+
+function writeInstruction(instruction, options, depth) {
+  if (options.ignoreInstruction) {
+    return '';
+  }
+  var key;
+  for (key in instruction) {
+    if (instruction.hasOwnProperty(key)) {
+      break;
+    }
+  }
+  var instructionName = 'instructionNameFn' in options ? options.instructionNameFn(key, instruction[key], currentElementName, currentElement) : key;
+  if (typeof instruction[key] === 'object') {
+    currentElement = instruction;
+    currentElementName = instructionName;
+    return '<?' + instructionName + writeAttributes(instruction[key][options.attributesKey], options, depth) + '?>';
+  } else {
+    var instructionValue = instruction[key] ? instruction[key] : '';
+    if ('instructionFn' in options) instructionValue = options.instructionFn(instructionValue, key, currentElementName, currentElement);
+    return '<?' + instructionName + (instructionValue ? ' ' + instructionValue : '') + '?>';
+  }
+}
+
+function writeComment(comment, options) {
+  return options.ignoreComment ? '' : '<!--' + ('commentFn' in options ? options.commentFn(comment, currentElementName, currentElement) : comment) + '-->';
+}
+
+function writeCdata(cdata, options) {
+  return options.ignoreCdata ? '' : '<![CDATA[' + ('cdataFn' in options ? options.cdataFn(cdata, currentElementName, currentElement) : cdata.replace(']]>', ']]]]><![CDATA[>')) + ']]>';
+}
+
+function writeDoctype(doctype, options) {
+  return options.ignoreDoctype ? '' : '<!DOCTYPE ' + ('doctypeFn' in options ? options.doctypeFn(doctype, currentElementName, currentElement) : doctype) + '>';
+}
+
+function writeText(text, options) {
+  if (options.ignoreText) return '';
+  text = '' + text; // ensure Number and Boolean are converted to String
+  text = text.replace(/&amp;/g, '&'); // desanitize to avoid double sanitization
+  text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return 'textFn' in options ? options.textFn(text, currentElementName, currentElement) : text;
+}
+
+function hasContent(element, options) {
+  var i;
+  if (element.elements && element.elements.length) {
+    for (i = 0; i < element.elements.length; ++i) {
+      switch (element.elements[i][options.typeKey]) {
+      case 'text':
+        if (options.indentText) {
+          return true;
+        }
+        break; // skip to next key
+      case 'cdata':
+        if (options.indentCdata) {
+          return true;
+        }
+        break; // skip to next key
+      case 'instruction':
+        if (options.indentInstruction) {
+          return true;
+        }
+        break; // skip to next key
+      case 'doctype':
+      case 'comment':
+      case 'element':
+        return true;
+      default:
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function writeElement(element, options, depth) {
+  currentElement = element;
+  currentElementName = element.name;
+  var xml = [], elementName = 'elementNameFn' in options ? options.elementNameFn(element.name, element) : element.name;
+  xml.push('<' + elementName);
+  if (element[options.attributesKey]) {
+    xml.push(writeAttributes(element[options.attributesKey], options, depth));
+  }
+  var withClosingTag = element[options.elementsKey] && element[options.elementsKey].length || element[options.attributesKey] && element[options.attributesKey]['xml:space'] === 'preserve';
+  if (!withClosingTag) {
+    if ('fullTagEmptyElementFn' in options) {
+      withClosingTag = options.fullTagEmptyElementFn(element.name, element);
+    } else {
+      withClosingTag = options.fullTagEmptyElement;
+    }
+  }
+  if (withClosingTag) {
+    xml.push('>');
+    if (element[options.elementsKey] && element[options.elementsKey].length) {
+      xml.push(writeElements(element[options.elementsKey], options, depth + 1));
+      currentElement = element;
+      currentElementName = element.name;
+    }
+    xml.push(options.spaces && hasContent(element, options) ? '\n' + Array(depth + 1).join(options.spaces) : '');
+    xml.push('</' + elementName + '>');
+  } else {
+    xml.push('/>');
+  }
+  return xml.join('');
+}
+
+function writeElements(elements, options, depth, firstLine) {
+  return elements.reduce(function (xml, element) {
+    var indent = writeIndentation(options, depth, firstLine && !xml);
+    switch (element.type) {
+    case 'element': return xml + indent + writeElement(element, options, depth);
+    case 'comment': return xml + indent + writeComment(element[options.commentKey], options);
+    case 'doctype': return xml + indent + writeDoctype(element[options.doctypeKey], options);
+    case 'cdata': return xml + (options.indentCdata ? indent : '') + writeCdata(element[options.cdataKey], options);
+    case 'text': return xml + (options.indentText ? indent : '') + writeText(element[options.textKey], options);
+    case 'instruction':
+      var instruction = {};
+      instruction[element[options.nameKey]] = element[options.attributesKey] ? element : element[options.instructionKey];
+      return xml + (options.indentInstruction ? indent : '') + writeInstruction(instruction, options, depth);
+    }
+  }, '');
+}
+
+function hasContentCompact(element, options, anyContent) {
+  var key;
+  for (key in element) {
+    if (element.hasOwnProperty(key)) {
+      switch (key) {
+      case options.parentKey:
+      case options.attributesKey:
+        break; // skip to next key
+      case options.textKey:
+        if (options.indentText || anyContent) {
+          return true;
+        }
+        break; // skip to next key
+      case options.cdataKey:
+        if (options.indentCdata || anyContent) {
+          return true;
+        }
+        break; // skip to next key
+      case options.instructionKey:
+        if (options.indentInstruction || anyContent) {
+          return true;
+        }
+        break; // skip to next key
+      case options.doctypeKey:
+      case options.commentKey:
+        return true;
+      default:
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function writeElementCompact(element, name, options, depth, indent) {
+  currentElement = element;
+  currentElementName = name;
+  var elementName = 'elementNameFn' in options ? options.elementNameFn(name, element) : name;
+  if (typeof element === 'undefined' || element === null || element === '') {
+    return 'fullTagEmptyElementFn' in options && options.fullTagEmptyElementFn(name, element) || options.fullTagEmptyElement ? '<' + elementName + '></' + elementName + '>' : '<' + elementName + '/>';
+  }
+  var xml = [];
+  if (name) {
+    xml.push('<' + elementName);
+    if (typeof element !== 'object') {
+      xml.push('>' + writeText(element,options) + '</' + elementName + '>');
+      return xml.join('');
+    }
+    if (element[options.attributesKey]) {
+      xml.push(writeAttributes(element[options.attributesKey], options, depth));
+    }
+    var withClosingTag = hasContentCompact(element, options, true) || element[options.attributesKey] && element[options.attributesKey]['xml:space'] === 'preserve';
+    if (!withClosingTag) {
+      if ('fullTagEmptyElementFn' in options) {
+        withClosingTag = options.fullTagEmptyElementFn(name, element);
+      } else {
+        withClosingTag = options.fullTagEmptyElement;
+      }
+    }
+    if (withClosingTag) {
+      xml.push('>');
+    } else {
+      xml.push('/>');
+      return xml.join('');
+    }
+  }
+  xml.push(writeElementsCompact(element, options, depth + 1, false));
+  currentElement = element;
+  currentElementName = name;
+  if (name) {
+    xml.push((indent ? writeIndentation(options, depth, false) : '') + '</' + elementName + '>');
+  }
+  return xml.join('');
+}
+
+function writeElementsCompact(element, options, depth, firstLine) {
+  var i, key, nodes, xml = [];
+  for (key in element) {
+    if (element.hasOwnProperty(key)) {
+      nodes = isArray(element[key]) ? element[key] : [element[key]];
+      for (i = 0; i < nodes.length; ++i) {
+        switch (key) {
+        case options.declarationKey: xml.push(writeDeclaration(nodes[i], options, depth)); break;
+        case options.instructionKey: xml.push((options.indentInstruction ? writeIndentation(options, depth, firstLine) : '') + writeInstruction(nodes[i], options, depth)); break;
+        case options.attributesKey: case options.parentKey: break; // skip
+        case options.textKey: xml.push((options.indentText ? writeIndentation(options, depth, firstLine) : '') + writeText(nodes[i], options)); break;
+        case options.cdataKey: xml.push((options.indentCdata ? writeIndentation(options, depth, firstLine) : '') + writeCdata(nodes[i], options)); break;
+        case options.doctypeKey: xml.push(writeIndentation(options, depth, firstLine) + writeDoctype(nodes[i], options)); break;
+        case options.commentKey: xml.push(writeIndentation(options, depth, firstLine) + writeComment(nodes[i], options)); break;
+        default: xml.push(writeIndentation(options, depth, firstLine) + writeElementCompact(nodes[i], key, options, depth, hasContentCompact(nodes[i], options)));
+        }
+        firstLine = firstLine && !xml.length;
+      }
+    }
+  }
+  return xml.join('');
+}
+
+module.exports = function (js, options) {
+  options = validateOptions(options);
+  var xml = [];
+  currentElement = js;
+  currentElementName = '_root_';
+  if (options.compact) {
+    xml.push(writeElementsCompact(js, options, 0, true));
+  } else {
+    if (js[options.declarationKey]) {
+      xml.push(writeDeclaration(js[options.declarationKey], options, 0));
+    }
+    if (js[options.elementsKey] && js[options.elementsKey].length) {
+      xml.push(writeElements(js[options.elementsKey], options, 0, !xml.length));
+    }
+  }
+  return xml.join('');
+};
+
+
+/***/ }),
+
+/***/ 1900:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var js2xml = __webpack_require__(4453);
+
+module.exports = function (json, options) {
+  if (json instanceof Buffer) {
+    json = json.toString();
+  }
+  var js = null;
+  if (typeof (json) === 'string') {
+    try {
+      js = JSON.parse(json);
+    } catch (e) {
+      throw new Error('The JSON structure is invalid');
+    }
+  } else {
+    js = json;
+  }
+  return js2xml(js, options);
+};
+
+
+/***/ }),
+
+/***/ 6717:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var isArray = __webpack_require__(1709).isArray;
+
+module.exports = {
+
+  copyOptions: function (options) {
+    var key, copy = {};
+    for (key in options) {
+      if (options.hasOwnProperty(key)) {
+        copy[key] = options[key];
+      }
+    }
+    return copy;
+  },
+
+  ensureFlagExists: function (item, options) {
+    if (!(item in options) || typeof options[item] !== 'boolean') {
+      options[item] = false;
+    }
+  },
+
+  ensureSpacesExists: function (options) {
+    if (!('spaces' in options) || (typeof options.spaces !== 'number' && typeof options.spaces !== 'string')) {
+      options.spaces = 0;
+    }
+  },
+
+  ensureAlwaysArrayExists: function (options) {
+    if (!('alwaysArray' in options) || (typeof options.alwaysArray !== 'boolean' && !isArray(options.alwaysArray))) {
+      options.alwaysArray = false;
+    }
+  },
+
+  ensureKeyExists: function (key, options) {
+    if (!(key + 'Key' in options) || typeof options[key + 'Key'] !== 'string') {
+      options[key + 'Key'] = options.compact ? '_' + key : key;
+    }
+  },
+
+  checkFnExists: function (key, options) {
+    return key + 'Fn' in options;
+  }
+
+};
+
+
+/***/ }),
+
+/***/ 2903:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var sax = __webpack_require__(2043);
+var expat /*= require('node-expat');*/ = { on: function () { }, parse: function () { } };
+var helper = __webpack_require__(6717);
+var isArray = __webpack_require__(1709).isArray;
+
+var options;
+var pureJsParser = true;
+var currentElement;
+
+function validateOptions(userOptions) {
+  options = helper.copyOptions(userOptions);
+  helper.ensureFlagExists('ignoreDeclaration', options);
+  helper.ensureFlagExists('ignoreInstruction', options);
+  helper.ensureFlagExists('ignoreAttributes', options);
+  helper.ensureFlagExists('ignoreText', options);
+  helper.ensureFlagExists('ignoreComment', options);
+  helper.ensureFlagExists('ignoreCdata', options);
+  helper.ensureFlagExists('ignoreDoctype', options);
+  helper.ensureFlagExists('compact', options);
+  helper.ensureFlagExists('alwaysChildren', options);
+  helper.ensureFlagExists('addParent', options);
+  helper.ensureFlagExists('trim', options);
+  helper.ensureFlagExists('nativeType', options);
+  helper.ensureFlagExists('nativeTypeAttributes', options);
+  helper.ensureFlagExists('sanitize', options);
+  helper.ensureFlagExists('instructionHasAttributes', options);
+  helper.ensureFlagExists('captureSpacesBetweenElements', options);
+  helper.ensureAlwaysArrayExists(options);
+  helper.ensureKeyExists('declaration', options);
+  helper.ensureKeyExists('instruction', options);
+  helper.ensureKeyExists('attributes', options);
+  helper.ensureKeyExists('text', options);
+  helper.ensureKeyExists('comment', options);
+  helper.ensureKeyExists('cdata', options);
+  helper.ensureKeyExists('doctype', options);
+  helper.ensureKeyExists('type', options);
+  helper.ensureKeyExists('name', options);
+  helper.ensureKeyExists('elements', options);
+  helper.ensureKeyExists('parent', options);
+  helper.checkFnExists('doctype', options);
+  helper.checkFnExists('instruction', options);
+  helper.checkFnExists('cdata', options);
+  helper.checkFnExists('comment', options);
+  helper.checkFnExists('text', options);
+  helper.checkFnExists('instructionName', options);
+  helper.checkFnExists('elementName', options);
+  helper.checkFnExists('attributeName', options);
+  helper.checkFnExists('attributeValue', options);
+  helper.checkFnExists('attributes', options);
+  return options;
+}
+
+function nativeType(value) {
+  var nValue = Number(value);
+  if (!isNaN(nValue)) {
+    return nValue;
+  }
+  var bValue = value.toLowerCase();
+  if (bValue === 'true') {
+    return true;
+  } else if (bValue === 'false') {
+    return false;
+  }
+  return value;
+}
+
+function addField(type, value) {
+  var key;
+  if (options.compact) {
+    if (
+      !currentElement[options[type + 'Key']] &&
+      (isArray(options.alwaysArray) ? options.alwaysArray.indexOf(options[type + 'Key']) !== -1 : options.alwaysArray)
+    ) {
+      currentElement[options[type + 'Key']] = [];
+    }
+    if (currentElement[options[type + 'Key']] && !isArray(currentElement[options[type + 'Key']])) {
+      currentElement[options[type + 'Key']] = [currentElement[options[type + 'Key']]];
+    }
+    if (type + 'Fn' in options && typeof value === 'string') {
+      value = options[type + 'Fn'](value, currentElement);
+    }
+    if (type === 'instruction' && ('instructionFn' in options || 'instructionNameFn' in options)) {
+      for (key in value) {
+        if (value.hasOwnProperty(key)) {
+          if ('instructionFn' in options) {
+            value[key] = options.instructionFn(value[key], key, currentElement);
+          } else {
+            var temp = value[key];
+            delete value[key];
+            value[options.instructionNameFn(key, temp, currentElement)] = temp;
+          }
+        }
+      }
+    }
+    if (isArray(currentElement[options[type + 'Key']])) {
+      currentElement[options[type + 'Key']].push(value);
+    } else {
+      currentElement[options[type + 'Key']] = value;
+    }
+  } else {
+    if (!currentElement[options.elementsKey]) {
+      currentElement[options.elementsKey] = [];
+    }
+    var element = {};
+    element[options.typeKey] = type;
+    if (type === 'instruction') {
+      for (key in value) {
+        if (value.hasOwnProperty(key)) {
+          break;
+        }
+      }
+      element[options.nameKey] = 'instructionNameFn' in options ? options.instructionNameFn(key, value, currentElement) : key;
+      if (options.instructionHasAttributes) {
+        element[options.attributesKey] = value[key][options.attributesKey];
+        if ('instructionFn' in options) {
+          element[options.attributesKey] = options.instructionFn(element[options.attributesKey], key, currentElement);
+        }
+      } else {
+        if ('instructionFn' in options) {
+          value[key] = options.instructionFn(value[key], key, currentElement);
+        }
+        element[options.instructionKey] = value[key];
+      }
+    } else {
+      if (type + 'Fn' in options) {
+        value = options[type + 'Fn'](value, currentElement);
+      }
+      element[options[type + 'Key']] = value;
+    }
+    if (options.addParent) {
+      element[options.parentKey] = currentElement;
+    }
+    currentElement[options.elementsKey].push(element);
+  }
+}
+
+function manipulateAttributes(attributes) {
+  if ('attributesFn' in options && attributes) {
+    attributes = options.attributesFn(attributes, currentElement);
+  }
+  if ((options.trim || 'attributeValueFn' in options || 'attributeNameFn' in options || options.nativeTypeAttributes) && attributes) {
+    var key;
+    for (key in attributes) {
+      if (attributes.hasOwnProperty(key)) {
+        if (options.trim) attributes[key] = attributes[key].trim();
+        if (options.nativeTypeAttributes) {
+          attributes[key] = nativeType(attributes[key]);
+        }
+        if ('attributeValueFn' in options) attributes[key] = options.attributeValueFn(attributes[key], key, currentElement);
+        if ('attributeNameFn' in options) {
+          var temp = attributes[key];
+          delete attributes[key];
+          attributes[options.attributeNameFn(key, attributes[key], currentElement)] = temp;
+        }
+      }
+    }
+  }
+  return attributes;
+}
+
+function onInstruction(instruction) {
+  var attributes = {};
+  if (instruction.body && (instruction.name.toLowerCase() === 'xml' || options.instructionHasAttributes)) {
+    var attrsRegExp = /([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|(\w+))\s*/g;
+    var match;
+    while ((match = attrsRegExp.exec(instruction.body)) !== null) {
+      attributes[match[1]] = match[2] || match[3] || match[4];
+    }
+    attributes = manipulateAttributes(attributes);
+  }
+  if (instruction.name.toLowerCase() === 'xml') {
+    if (options.ignoreDeclaration) {
+      return;
+    }
+    currentElement[options.declarationKey] = {};
+    if (Object.keys(attributes).length) {
+      currentElement[options.declarationKey][options.attributesKey] = attributes;
+    }
+    if (options.addParent) {
+      currentElement[options.declarationKey][options.parentKey] = currentElement;
+    }
+  } else {
+    if (options.ignoreInstruction) {
+      return;
+    }
+    if (options.trim) {
+      instruction.body = instruction.body.trim();
+    }
+    var value = {};
+    if (options.instructionHasAttributes && Object.keys(attributes).length) {
+      value[instruction.name] = {};
+      value[instruction.name][options.attributesKey] = attributes;
+    } else {
+      value[instruction.name] = instruction.body;
+    }
+    addField('instruction', value);
+  }
+}
+
+function onStartElement(name, attributes) {
+  var element;
+  if (typeof name === 'object') {
+    attributes = name.attributes;
+    name = name.name;
+  }
+  attributes = manipulateAttributes(attributes);
+  if ('elementNameFn' in options) {
+    name = options.elementNameFn(name, currentElement);
+  }
+  if (options.compact) {
+    element = {};
+    if (!options.ignoreAttributes && attributes && Object.keys(attributes).length) {
+      element[options.attributesKey] = {};
+      var key;
+      for (key in attributes) {
+        if (attributes.hasOwnProperty(key)) {
+          element[options.attributesKey][key] = attributes[key];
+        }
+      }
+    }
+    if (
+      !(name in currentElement) &&
+      (isArray(options.alwaysArray) ? options.alwaysArray.indexOf(name) !== -1 : options.alwaysArray)
+    ) {
+      currentElement[name] = [];
+    }
+    if (currentElement[name] && !isArray(currentElement[name])) {
+      currentElement[name] = [currentElement[name]];
+    }
+    if (isArray(currentElement[name])) {
+      currentElement[name].push(element);
+    } else {
+      currentElement[name] = element;
+    }
+  } else {
+    if (!currentElement[options.elementsKey]) {
+      currentElement[options.elementsKey] = [];
+    }
+    element = {};
+    element[options.typeKey] = 'element';
+    element[options.nameKey] = name;
+    if (!options.ignoreAttributes && attributes && Object.keys(attributes).length) {
+      element[options.attributesKey] = attributes;
+    }
+    if (options.alwaysChildren) {
+      element[options.elementsKey] = [];
+    }
+    currentElement[options.elementsKey].push(element);
+  }
+  element[options.parentKey] = currentElement; // will be deleted in onEndElement() if !options.addParent
+  currentElement = element;
+}
+
+function onText(text) {
+  if (options.ignoreText) {
+    return;
+  }
+  if (!text.trim() && !options.captureSpacesBetweenElements) {
+    return;
+  }
+  if (options.trim) {
+    text = text.trim();
+  }
+  if (options.nativeType) {
+    text = nativeType(text);
+  }
+  if (options.sanitize) {
+    text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  addField('text', text);
+}
+
+function onComment(comment) {
+  if (options.ignoreComment) {
+    return;
+  }
+  if (options.trim) {
+    comment = comment.trim();
+  }
+  addField('comment', comment);
+}
+
+function onEndElement(name) {
+  var parentElement = currentElement[options.parentKey];
+  if (!options.addParent) {
+    delete currentElement[options.parentKey];
+  }
+  currentElement = parentElement;
+}
+
+function onCdata(cdata) {
+  if (options.ignoreCdata) {
+    return;
+  }
+  if (options.trim) {
+    cdata = cdata.trim();
+  }
+  addField('cdata', cdata);
+}
+
+function onDoctype(doctype) {
+  if (options.ignoreDoctype) {
+    return;
+  }
+  doctype = doctype.replace(/^ /, '');
+  if (options.trim) {
+    doctype = doctype.trim();
+  }
+  addField('doctype', doctype);
+}
+
+function onError(error) {
+  error.note = error; //console.error(error);
+}
+
+module.exports = function (xml, userOptions) {
+
+  var parser = pureJsParser ? sax.parser(true, {}) : parser = new expat.Parser('UTF-8');
+  var result = {};
+  currentElement = result;
+
+  options = validateOptions(userOptions);
+
+  if (pureJsParser) {
+    parser.opt = {strictEntities: true};
+    parser.onopentag = onStartElement;
+    parser.ontext = onText;
+    parser.oncomment = onComment;
+    parser.onclosetag = onEndElement;
+    parser.onerror = onError;
+    parser.oncdata = onCdata;
+    parser.ondoctype = onDoctype;
+    parser.onprocessinginstruction = onInstruction;
+  } else {
+    parser.on('startElement', onStartElement);
+    parser.on('text', onText);
+    parser.on('comment', onComment);
+    parser.on('endElement', onEndElement);
+    parser.on('error', onError);
+    //parser.on('startCdata', onStartCdata);
+    //parser.on('endCdata', onEndCdata);
+    //parser.on('entityDecl', onEntityDecl);
+  }
+
+  if (pureJsParser) {
+    parser.write(xml).close();
+  } else {
+    if (!parser.parse(xml)) {
+      throw new Error('XML parsing error: ' + parser.getError());
+    }
+  }
+
+  if (result[options.elementsKey]) {
+    var temp = result[options.elementsKey];
+    delete result[options.elementsKey];
+    result[options.elementsKey] = temp;
+    delete result.text;
+  }
+
+  return result;
+
+};
+
+
+/***/ }),
+
+/***/ 8919:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var helper = __webpack_require__(6717);
+var xml2js = __webpack_require__(2903);
+
+function validateOptions (userOptions) {
+  var options = helper.copyOptions(userOptions);
+  helper.ensureSpacesExists(options);
+  return options;
+}
+
+module.exports = function(xml, userOptions) {
+  var options, js, json, parentKey;
+  options = validateOptions(userOptions);
+  js = xml2js(xml, options);
+  parentKey = 'compact' in options && options.compact ? '_parent' : 'parent';
+  // parentKey = ptions.compact ? '_parent' : 'parent'; // consider this
+  if ('addParent' in options && options.addParent) {
+    json = JSON.stringify(js, function (k, v) { return k === parentKey? '_' : v; }, options.spaces);
+  } else {
+    json = JSON.stringify(js, null, options.spaces);
+  }
+  return json.replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+};
+
+
+/***/ }),
+
+/***/ 5907:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var fs = __webpack_require__(5747).promises;
+var convert = __webpack_require__(8821);
+var glob = __webpack_require__(1957);
+var path = __webpack_require__(5622);
+var Deque = __webpack_require__(2045);
+const core = __webpack_require__(2186);
+
+let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
+  verify(testPath, nodeIndex, nodeTotal);
   return new Promise((resolve) => {
     glob(
-      `${directoryPath}/**/*Test.kt`,
-      { ignore: filesToExlude.map((value) => `${directoryPath}/**/${value}`) },
+      `${testPath}/**/*Test.kt`,
+      { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
       function (er, files) {
         if (er != null) {
-          throw new Error(`Error: Reading files from ${directoryPath}: ${er}`);
+          throw new Error(`Error: Reading files from ${testPath}: ${er}`);
         }
         const tests = files
           .filter((value, index) => index % nodeTotal == nodeIndex)
@@ -3829,18 +11648,109 @@ let split = function (directoryPath, nodeIndex, nodeTotal, filesToExlude = []) {
             return `--tests ${path.parse(value).name}`;
           })
           .join(" ");
+        core.info(`Successfully created tests: ${tests}`);
         resolve(tests);
       }
     );
   });
 };
 
-let verify = function (
-  directoryPath,
+let splitWithTiming = async function (
+  testPath,
+  testResultPath,
   nodeIndex,
   nodeTotal,
   filesToExlude = []
 ) {
+  verify(testPath, nodeIndex, nodeTotal, filesToExlude);
+  return new Promise((resolve) => {
+    glob(
+      `${testPath}/**/*Test.kt`,
+      { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
+      function (er, testFiles) {
+        if (er != null) {
+          throw new Error(`Error: Reading files from ${testPath}: ${er}`);
+        }
+        glob(
+          `${testResultPath}/**/*.xml`,
+          { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
+          async function (er, testResultFiles) {
+            if (er != null) {
+              throw new Error(`Error: Reading files from ${testPath}: ${er}`);
+            }
+            // TODO: More complex way checking if invalid
+            if (testFiles.length != testResultFiles.length) {
+              let tests = await split(
+                testPath,
+                nodeIndex,
+                nodeTotal,
+                filesToExlude
+              );
+              resolve(tests);
+            } else {
+              var deque = new Deque();
+              var testResultTotalTime = 0;
+              for (i = 0; i < testResultFiles.length; i++) {
+                let xml = JSON.parse(
+                  convert.xml2json(await fs.readFile(testResultFiles[i]))
+                );
+                let testResultName = xml.elements[0].attributes.name;
+                let testResultTime = parseFloat(
+                  xml.elements[0].attributes.time
+                );
+                testResultTotalTime += testResultTime;
+                deque.add({ name: testResultName, time: testResultTime });
+              }
+              let testChunkMaxTime = testResultTotalTime / nodeTotal;
+              deque = deque.sorted((a, b) => {
+                return a.time - b.time;
+              });
+              console.log(testChunkMaxTime);
+              for (i = 0; i < nodeTotal; i++) {
+                let testNames = [];
+                var testChunkCurrentTime = 0;
+                var isPollLast = true;
+                while (
+                  deque.length != 0 &&
+                  (testChunkCurrentTime < testChunkMaxTime ||
+                    i == nodeTotal - 1)
+                ) {
+                  let result = isPollLast ? deque.pop() : deque.shift();
+                  testNames.push(result.name);
+                  testChunkCurrentTime += result.time;
+                  isPollLast = false;
+                  if (
+                    result.length != 0 &&
+                    testChunkCurrentTime + deque.peek().time >
+                      testChunkMaxTime &&
+                    i < nodeTotal - nodeTotal / 4
+                  ) {
+                    break;
+                  }
+                }
+                if (i == nodeIndex) {
+                  let tests = testNames
+                    .map((value) => {
+                      return `--tests ${value}`;
+                    })
+                    .join(" ");
+                  core.info(
+                    `Successfully created tests through timings: ${tests}`
+                  );
+                  resolve(tests);
+                  break;
+                }
+              }
+              throw new Error("Error: Unable to create tests");
+            }
+          }
+        );
+      }
+    );
+  });
+};
+
+let verify = function (directoryPath, nodeIndex, nodeTotal) {
   if (directoryPath === "") {
     throw new Error("Error: Require module");
   }
@@ -3852,12 +11762,15 @@ let verify = function (
   }
 };
 
-module.exports = split;
+module.exports = {
+  split: split,
+  splitWithTiming: splitWithTiming,
+};
 
 
 /***/ }),
 
-/***/ 357:
+/***/ 2357:
 /***/ ((module) => {
 
 "use strict";
@@ -3865,7 +11778,7 @@ module.exports = require("assert");;
 
 /***/ }),
 
-/***/ 614:
+/***/ 8614:
 /***/ ((module) => {
 
 "use strict";
@@ -3873,7 +11786,7 @@ module.exports = require("events");;
 
 /***/ }),
 
-/***/ 747:
+/***/ 5747:
 /***/ ((module) => {
 
 "use strict";
@@ -3881,7 +11794,7 @@ module.exports = require("fs");;
 
 /***/ }),
 
-/***/ 87:
+/***/ 2087:
 /***/ ((module) => {
 
 "use strict";
@@ -3889,7 +11802,7 @@ module.exports = require("os");;
 
 /***/ }),
 
-/***/ 622:
+/***/ 5622:
 /***/ ((module) => {
 
 "use strict";
@@ -3897,7 +11810,23 @@ module.exports = require("path");;
 
 /***/ }),
 
-/***/ 669:
+/***/ 2413:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("stream");;
+
+/***/ }),
+
+/***/ 4304:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("string_decoder");;
+
+/***/ }),
+
+/***/ 1669:
 /***/ ((module) => {
 
 "use strict";
@@ -3918,8 +11847,8 @@ module.exports = require("util");;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
+/******/ 			id: moduleId,
+/******/ 			loaded: false,
 /******/ 			exports: {}
 /******/ 		};
 /******/ 	
@@ -3932,18 +11861,30 @@ module.exports = require("util");;
 /******/ 			if(threw) delete __webpack_module_cache__[moduleId];
 /******/ 		}
 /******/ 	
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+/******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/node module decorator */
+/******/ 	(() => {
+/******/ 		__webpack_require__.nmd = (module) => {
+/******/ 			module.paths = [];
+/******/ 			if (!module.children) module.children = [];
+/******/ 			return module;
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	__webpack_require__.ab = __dirname + "/";/************************************************************************/
 /******/ 	// module exports must be returned from runtime so entry inlining is disabled
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(932);
+/******/ 	return __webpack_require__(2932);
 /******/ })()
 ;
 //# sourceMappingURL=index.js.map

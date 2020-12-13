@@ -22,8 +22,9 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./
         with:
-          module: data
+          test-path: ./data
           node-index: 0
           node-total: 2
-          exclude: |
+          test-result-path: ./data/test-result/test-app*
+          test-exclude: |
             IgnoreTest.kt
