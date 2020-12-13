@@ -1,13 +1,21 @@
-name: 'Wait'
-description: 'Wait a designated number of milliseconds'
+name: "Splitter+Timings"
+description: "Create a list of tests for gradlew using splitting and timings"
 inputs:
-  milliseconds:  # id of input
-    description: 'number of milliseconds to wait'
+  module:
+    description: "Module of the project"
     required: true
-    default: '1000'
+  node-index:
+    description: "Node index of the current matrix"
+    required: true
+  node-total:
+    description: "Node total of the current matrix"
+    required: true
+  exclude:
+    description: "Test files to ignore"
+    required: true
 outputs:
-  time: # output will be available to future steps
-    description: 'The message to output'
+  tests:
+    description: "Tests to be run within gradle"
 runs:
-  using: 'node12'
-  main: 'dist/index.js'
+  using: "node12"
+  main: "dist/index.js"
