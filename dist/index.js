@@ -3,13 +3,13 @@ require('./sourcemap-register.js');module.exports =
 /******/ 	var __webpack_modules__ = ({
 
 /***/ 2932:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-/* module decorator */ module = __webpack_require__.nmd(module);
 const core = __webpack_require__(2186);
 const split = __webpack_require__(5907).split;
 const splitWithTiming = __webpack_require__(5907).splitWithTiming;
 const path = __webpack_require__(5622);
+const glob = __webpack_require__(1957);
 
 // most @actions toolkit packages have async methods
 async function run() {
@@ -21,12 +21,21 @@ async function run() {
     const testExclude = getInputAsArray("test-exclude");
 
     core.info(
-      `Creating ${module} tests for index ${nodeIndex} of total ${nodeTotal} with files to ignore: ${testExclude}`
+      `Creating ${testPath} tests for index ${nodeIndex} of total ${nodeTotal} with files to ignore: ${testExclude}`
     );
 
     var tests = "";
-    if (testResultPath == null || testResultPath === "") {
-      tests = await split(testPath, nodeIndex, nodeTotal, testExclude);
+    if (glob.sync(`${testPath}/**/*Test.kt`).length === 0) {
+      core.setFailed(`ERROR: Test path does not exist: ${testPath}`);
+      return;
+    }
+    if (glob.sync(`${testResultPath}/**/*.xml`).length === 0) {
+      core.info(
+        `TestResult[${testResultPath}] does not exist, using split without timings`
+      );
+      tests = await split(testPath, nodeIndex, nodeTotal, testExclude).catch(
+        core.setFailed
+      );
     } else {
       tests = await splitWithTiming(
         testPath,
@@ -34,7 +43,7 @@ async function run() {
         nodeIndex,
         nodeTotal,
         testExclude
-      );
+      ).catch(core.setFailed);
     }
 
     core.setOutput("tests", tests);
@@ -11667,19 +11676,26 @@ let splitWithTiming = async function (
     glob(
       `${testPath}/**/*Test.kt`,
       { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
-      function (er, testFiles) {
-        if (er != null) {
-          throw new Error(`Error: Reading files from ${testPath}: ${er}`);
+      function (testFilesError, testFiles) {
+        if (testFilesError != null) {
+          throw new Error(
+            `Error: Reading files from ${testPath}: ${testFilesError}`
+          );
         }
         glob(
           `${testResultPath}/**/*.xml`,
           { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
-          async function (er, testResultFiles) {
-            if (er != null) {
-              throw new Error(`Error: Reading files from ${testPath}: ${er}`);
+          async function (testResultFilesError, testResultFiles) {
+            if (testResultFilesError != null) {
+              throw new Error(
+                `Error: Reading files from ${testPath}: ${testResultFilesError}`
+              );
             }
             // TODO: More complex way checking if invalid
             if (testFiles.length != testResultFiles.length) {
+              core.info(
+                `Test[${testPath}][${testFiles.length}] and TestResult[[${testResultPath}]][${testResultFiles.length}] are not in sync, using split without timings`
+              );
               let tests = await split(
                 testPath,
                 nodeIndex,
@@ -11690,6 +11706,7 @@ let splitWithTiming = async function (
             } else {
               var deque = new Deque();
               var testResultTotalTime = 0;
+              var i = 0;
               for (i = 0; i < testResultFiles.length; i++) {
                 let xml = JSON.parse(
                   convert.xml2json(await fs.readFile(testResultFiles[i]))
@@ -11720,7 +11737,7 @@ let splitWithTiming = async function (
                   testChunkCurrentTime += result.time;
                   isPollLast = false;
                   if (
-                    result.length != 0 &&
+                    deque.length != 0 &&
                     testChunkCurrentTime + deque.peek().time >
                       testChunkMaxTime &&
                     i < nodeTotal - nodeTotal / 4
@@ -11735,10 +11752,10 @@ let splitWithTiming = async function (
                     })
                     .join(" ");
                   core.info(
-                    `Successfully created tests through timings: ${tests}`
+                    `Successfully created tests using timings: ${tests}`
                   );
                   resolve(tests);
-                  break;
+                  return;
                 }
               }
               throw new Error("Error: Unable to create tests");
@@ -11847,8 +11864,8 @@ module.exports = require("util");;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			id: moduleId,
-/******/ 			loaded: false,
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
 /******/ 			exports: {}
 /******/ 		};
 /******/ 	
@@ -11861,23 +11878,11 @@ module.exports = require("util");;
 /******/ 			if(threw) delete __webpack_module_cache__[moduleId];
 /******/ 		}
 /******/ 	
-/******/ 		// Flag the module as loaded
-/******/ 		module.loaded = true;
-/******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/node module decorator */
-/******/ 	(() => {
-/******/ 		__webpack_require__.nmd = (module) => {
-/******/ 			module.paths = [];
-/******/ 			if (!module.children) module.children = [];
-/******/ 			return module;
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	__webpack_require__.ab = __dirname + "/";/************************************************************************/

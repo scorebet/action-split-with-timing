@@ -53,9 +53,9 @@ test("invalid test for invalid node-total", async () => {
 // test("valid tests with timings for a multiple test", async () => {
 //   var tests = await splitWithTiming(
 //     "./data/test-1",
-//     "./data/test-result/test-app3-result/repositories*",
-//     0,
-//     5
+//     "./data/test-result/test-app3-result/app*",
+//     19,
+//     18
 //   );
 //   expect(tests).toEqual(
 //     "--tests Hello1Test --tests Hello2Test --tests Hello3Test"

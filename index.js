@@ -2,6 +2,7 @@ const core = require("@actions/core");
 const split = require("./splitter").split;
 const splitWithTiming = require("./splitter").splitWithTiming;
 const path = require("path");
+const glob = require("glob");
 
 // most @actions toolkit packages have async methods
 async function run() {
@@ -17,8 +18,17 @@ async function run() {
     );
 
     var tests = "";
-    if (testResultPath == null || testResultPath === "") {
-      tests = await split(testPath, nodeIndex, nodeTotal, testExclude);
+    if (glob.sync(`${testPath}/**/*Test.kt`).length === 0) {
+      core.setFailed(`ERROR: Test path does not exist: ${testPath}`);
+      return;
+    }
+    if (glob.sync(`${testResultPath}/**/*.xml`).length === 0) {
+      core.info(
+        `TestResult[${testResultPath}] does not exist, using split without timings`
+      );
+      tests = await split(testPath, nodeIndex, nodeTotal, testExclude).catch(
+        core.setFailed
+      );
     } else {
       tests = await splitWithTiming(
         testPath,
@@ -26,7 +36,7 @@ async function run() {
         nodeIndex,
         nodeTotal,
         testExclude
-      );
+      ).catch(core.setFailed);
     }
 
     core.setOutput("tests", tests);

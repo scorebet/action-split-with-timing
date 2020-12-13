@@ -57,6 +57,9 @@ let splitWithTiming = async function (
             }
             // TODO: More complex way checking if invalid
             if (testFiles.length != testResultFiles.length) {
+              core.info(
+                `Test[${testPath}][${testFiles.length}] and TestResult[[${testResultPath}]][${testResultFiles.length}] are not in sync, using split without timings`
+              );
               let tests = await split(
                 testPath,
                 nodeIndex,
@@ -67,6 +70,7 @@ let splitWithTiming = async function (
             } else {
               var deque = new Deque();
               var testResultTotalTime = 0;
+              var i = 0;
               for (i = 0; i < testResultFiles.length; i++) {
                 let xml = JSON.parse(
                   convert.xml2json(await fs.readFile(testResultFiles[i]))
@@ -97,7 +101,7 @@ let splitWithTiming = async function (
                   testChunkCurrentTime += result.time;
                   isPollLast = false;
                   if (
-                    result.length != 0 &&
+                    deque.length != 0 &&
                     testChunkCurrentTime + deque.peek().time >
                       testChunkMaxTime &&
                     i < nodeTotal - nodeTotal / 4
@@ -112,10 +116,10 @@ let splitWithTiming = async function (
                     })
                     .join(" ");
                   core.info(
-                    `Successfully created tests through timings: ${tests}`
+                    `Successfully created tests using timings: ${tests}`
                   );
                   resolve(tests);
-                  break;
+                  return;
                 }
               }
               throw new Error("Error: Unable to create tests");

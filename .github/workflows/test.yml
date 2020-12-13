@@ -28,3 +28,18 @@ jobs:
           test-result-path: ./data/test-result/test-app*
           test-exclude: |
             IgnoreTest.kt
+      - uses: ./
+        with:
+          test-path: ./data/test-1
+          node-index: 0
+          node-total: 2
+          test-result-path: ./data/test-result/test-app-result
+          test-exclude: |
+            IgnoreTest.kt
+      - uses: ./
+        with:
+          test-path: ./data
+          node-index: 0
+          node-total: 2
+          test-exclude: |
+            IgnoreTest.kt
