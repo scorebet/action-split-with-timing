@@ -3,6 +3,7 @@ var convert = require("xml-js");
 var glob = require("glob");
 var path = require("path");
 var Deque = require("collections/deque");
+var Map = require("collections/map");
 const core = require("@actions/core");
 
 let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
@@ -26,6 +27,37 @@ let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
       }
     );
   });
+};
+
+let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
+  let missingTests = [];
+  let testResultFilesMap = new Map();
+  testResultFiles.forEach((testResultFile) => {
+    let fileName = path.parse(testResultFile).name.split(".").pop();
+    if (!testResultFilesMap.has(fileName)) {
+      testResultFilesMap.add(1, fileName);
+    } else {
+      testResultFilesMap.add(testResultFilesMap.get(fileName) + 1, fileName);
+    }
+  });
+  testFiles.forEach((testFile) => {
+    let fileName = path.parse(testFile).name;
+    if (testResultFilesMap.has(fileName)) {
+      testResultFilesMap.add(testResultFilesMap.get(fileName) - 1, fileName);
+      if (testResultFilesMap.get(fileName) <= 0) {
+        testResultFilesMap.delete(fileName);
+      }
+    } else {
+      missingTests.push(fileName);
+    }
+  });
+  if (missingTests.length != 0) {
+    core.info(
+      `WARNING: Test[${testFiles.length}] and TestResult[${testResultFiles.length}] are not in sync, unsync tests: ${missingTests}`
+    );
+    return false;
+  }
+  return true;
 };
 
 let splitWithTiming = async function (
@@ -55,11 +87,7 @@ let splitWithTiming = async function (
                 `Error: Reading files from ${testPath}: ${testResultFilesError}`
               );
             }
-            // TODO: More complex way checking if invalid
-            if (testFiles.length != testResultFiles.length) {
-              core.info(
-                `Test[${testPath}][${testFiles.length}] and TestResult[[${testResultPath}]][${testResultFiles.length}] are not in sync, using split without timings`
-              );
+            if (!isTestFilesOnSyncWithTestResults(testFiles, testResultFiles)) {
               let tests = await split(
                 testPath,
                 nodeIndex,
@@ -86,7 +114,6 @@ let splitWithTiming = async function (
               deque = deque.sorted((a, b) => {
                 return a.time - b.time;
               });
-              console.log(testChunkMaxTime);
               for (i = 0; i < nodeTotal; i++) {
                 let testNames = [];
                 var testChunkCurrentTime = 0;

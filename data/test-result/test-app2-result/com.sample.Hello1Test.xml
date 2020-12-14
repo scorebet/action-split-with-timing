@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="bet.thescore.android.ui.promotions.PromotionsViewModelTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2020-12-11T20:57:34" hostname="fv-az186-60" time="0.74">
+<testsuite name="bet.thescore.android.ui.promotions.Hello1Test" tests="14" skipped="0" failures="0" errors="0" timestamp="2020-12-11T20:57:34" hostname="fv-az186-60" time="0.74">
   <properties/>
   <testcase name="verify analytics page type" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.318"/>
   <testcase name="verify deeplink data is null" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.001"/>
