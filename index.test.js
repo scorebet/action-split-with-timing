@@ -70,7 +70,7 @@ test("valid tests with timings for a multiple test", async () => {
     1
   );
   expect(tests).toEqual(
-    "--tests bet.thescore.android.ui.adapters.viewholders.Hello2Test --tests bet.thescore.android.ui.adapters.viewholders.Hello3Test"
+    "--tests bet.thescore.android.ui.adapters.viewholders.Hello2Test --tests bet.thescore.android.ui.adapters.viewholders.Hello3Test --tests bet.thescore.android.ui.promotions.Hello1Test"
   );
 });
 

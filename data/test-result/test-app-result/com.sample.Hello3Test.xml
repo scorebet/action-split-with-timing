@@ -1,22 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="bet.thescore.android.ui.adapters.viewholders.Hello3Test" tests="8" skipped="0" failures="0" errors="0" timestamp="2020-12-11T20:57:40" hostname="fv-az186-60" time="0.372">
-  <properties/>
-  <testcase name="onRecycle returns null state" classname="bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest" time="0.051"/>
-  <testcase name="recycle view holder and assert it is back to default state" classname="bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest" time="0.067"/>
-  <testcase name="verify style for Live is set appropriately" classname="bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest" time="0.044"/>
-  <testcase name="set sections and assert the values" classname="bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest" time="0.038"/>
-  <testcase name="set null title and assert that title view is visible" classname="bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest" time="0.038"/>
-  <testcase name="set title and assert the value" classname="bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest" time="0.063"/>
-  <testcase name="assert default state of the view holder" classname="bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest" time="0.035"/>
-  <testcase name="set more than 3 sections and assert nothing is affected" classname="bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest" time="0.036"/>
-  <system-out><![CDATA[[Robolectric] bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest.onRecycle returns null state: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest.recycle view holder and assert it is back to default state: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest.verify style for Live is set appropriately: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest.set sections and assert the values: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest.set null title and assert that title view is visible: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest.set title and assert the value: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest.assert default state of the view holder: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.BetSelectorHeaderViewHolderTest.set more than 3 sections and assert nothing is affected: sdk=28; resources=BINARY
-]]></system-out>
-  <system-err><![CDATA[]]></system-err>
 </testsuite>

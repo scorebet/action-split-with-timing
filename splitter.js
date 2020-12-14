@@ -17,7 +17,7 @@ let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
           throw new Error(`Error: Reading files from ${testPath}: ${er}`);
         }
         const tests = files
-          .filter((value, index) => index % nodeTotal == nodeIndex)
+          .filter((value, index) => index % nodeTotal === nodeIndex)
           .map((value) => {
             return `--tests ${path.parse(value).name}`;
           })
@@ -56,8 +56,12 @@ let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
       `WARNING: Test[${testFiles.length}] and TestResult[${testResultFiles.length}] are not in sync, unsync tests: ${missingTests}`
     );
     return false;
+  } else {
+    core.info(
+      `SUCCESS: Test[${testFiles.length}] and TestResult[${testResultFiles.length}] are in sync, using timings for tests`
+    );
+    return true;
   }
-  return true;
 };
 
 let splitWithTiming = async function (
@@ -121,14 +125,16 @@ let splitWithTiming = async function (
                 while (
                   deque.length != 0 &&
                   (testChunkCurrentTime < testChunkMaxTime ||
-                    i == nodeTotal - 1)
+                    i === nodeTotal - 1)
                 ) {
                   let result = isPollLast ? deque.pop() : deque.shift();
                   testNames.push(result.name);
                   testChunkCurrentTime += result.time;
                   isPollLast = false;
-                  if (
-                    deque.length != 0 &&
+                  if (deque.length !== 0 && i === nodeTotal - 1) {
+                    continue;
+                  } else if (
+                    deque.length !== 0 &&
                     testChunkCurrentTime + deque.peek().time >
                       testChunkMaxTime &&
                     i < nodeTotal - nodeTotal / 4
@@ -136,7 +142,7 @@ let splitWithTiming = async function (
                     break;
                   }
                 }
-                if (i == nodeIndex) {
+                if (i === nodeIndex) {
                   let tests = testNames
                     .map((value) => {
                       return `--tests ${value}`;

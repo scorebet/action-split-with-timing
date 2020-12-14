@@ -1,24 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="bet.thescore.android.ui.adapters.viewholders.Hello2Test" tests="9" skipped="0" failures="0" errors="0" timestamp="2020-12-11T20:57:35" hostname="fv-az186-60" time="0.982">
-  <properties/>
-  <testcase name="setting live state shows live label" classname="bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest" time="0.095"/>
-  <testcase name="assert default state" classname="bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest" time="0.064"/>
-  <testcase name="onRecycle returns null state" classname="bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest" time="0.047"/>
-  <testcase name="set selected state changes checked state" classname="bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest" time="0.048"/>
-  <testcase name="set enabled states and assert states" classname="bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest" time="0.045"/>
-  <testcase name="setting description shows description" classname="bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest" time="0.046"/>
-  <testcase name="clicking item notifies click listener" classname="bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest" time="0.304"/>
-  <testcase name="set state to disabled and confirm click listener does not fire" classname="bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest" time="0.257"/>
-  <testcase name="calling recycle shows default state" classname="bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest" time="0.057"/>
-  <system-out><![CDATA[[Robolectric] bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest.setting live state shows live label: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest.assert default state: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest.onRecycle returns null state: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest.set selected state changes checked state: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest.set enabled states and assert states: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest.setting description shows description: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest.clicking item notifies click listener: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest.set state to disabled and confirm click listener does not fire: sdk=28; resources=BINARY
-[Robolectric] bet.thescore.android.ui.adapters.viewholders.SelectableOptionViewHolderTest.calling recycle shows default state: sdk=28; resources=BINARY
-]]></system-out>
-  <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -1,20 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="bet.thescore.android.ui.promotions.Hello1Test" tests="14" skipped="0" failures="0" errors="0" timestamp="2020-12-11T20:57:34" hostname="fv-az186-60" time="0.74">
-  <properties/>
-  <testcase name="verify analytics page type" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.318"/>
-  <testcase name="verify deeplink data is null" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.001"/>
-  <testcase name="verify promo clicked event is never tracked if details is clicked" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.008"/>
-  <testcase name="verify fetching data returns back promotions from account info repository" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.387"/>
-  <testcase name="verify no analytics page title" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.001"/>
-  <testcase name="verify no analytics filter" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.001"/>
-  <testcase name="verify footer item type is null" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.001"/>
-  <testcase name="verify invalid promos are not tracked" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.006"/>
-  <testcase name="verify promo clicked event is tracked" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.004"/>
-  <testcase name="verify toolbar data is null" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.001"/>
-  <testcase name="verify footer data is null" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.001"/>
-  <testcase name="verify user error data is null" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.001"/>
-  <testcase name="verify no analytics slider type" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.0"/>
-  <testcase name="verify view promos event is tracked each time promos are fetched" classname="bet.thescore.android.ui.promotions.PromotionsViewModelTest" time="0.003"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
 </testsuite>
