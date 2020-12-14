@@ -1,0 +1,45 @@
+name: "units-test"
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "releases/*"
+
+jobs:
+  # unit tests
+  units:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm ci
+      - run: npm test
+
+  # test action works running from the graph
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./
+        with:
+          test-path: ./data
+          node-index: 0
+          node-total: 2
+          test-result-path: ./data/test-result/test-app*
+          test-exclude: |
+            IgnoreTest.kt
+      - uses: ./
+        with:
+          test-path: ./data/test-1
+          node-index: 0
+          node-total: 2
+          test-result-path: ./data/test-result/test-app-result
+          test-exclude: |
+            IgnoreTest.kt
+      - uses: ./
+        with:
+          test-path: ./data
+          node-index: 0
+          node-total: 2
+          test-exclude: |
+            IgnoreTest.kt

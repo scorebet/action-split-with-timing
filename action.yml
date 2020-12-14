@@ -1,0 +1,25 @@
+name: "Splitter+Timings"
+description: "Create a list of tests for gradlew using splitting and timings"
+inputs:
+  test-path:
+    description: "Path of the test of the project"
+    required: true
+  node-index:
+    description: "Node index of the current matrix"
+    required: true
+  node-total:
+    description: "Node total of the current matrix"
+    required: true
+  test-result-path:
+    description: "Path of the test result from previous build"
+    required: false
+  test-exclude:
+    description: "Test files to ignore"
+    required: false
+    # TODO: Disable timings
+outputs:
+  tests:
+    description: "Tests to be run within gradle"
+runs:
+  using: "node12"
+  main: "dist/index.js"
