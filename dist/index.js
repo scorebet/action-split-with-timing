@@ -12542,6 +12542,7 @@ let splitWithTiming = async function (
                 var isPollLast = true;
                 while (
                   deque.length != 0 &&
+                  deque.length >= nodeTotal - i &&
                   (testChunkCurrentTime < testChunkMaxTime ||
                     i === nodeTotal - 1)
                 ) {
@@ -12561,6 +12562,11 @@ let splitWithTiming = async function (
                   }
                 }
                 if (i === nodeIndex) {
+                  if (i == nodeTotal - 1 && deque.length != 0) {
+                    throw new Error(
+                      `Error: Some test was not consumed: ${deque.length}`
+                    );
+                  }
                   let tests = testNames
                     .map((value) => {
                       return `--tests ${value}`;
@@ -12591,6 +12597,11 @@ let verify = function (directoryPath, nodeIndex, nodeTotal) {
   }
   if (nodeTotal <= 0) {
     throw new Error(`Error: Invalid node-total: ${nodeTotal}`);
+  }
+  if (nodeIndex >= nodeTotal) {
+    throw new Error(
+      `Error: Invalid node-index: ${nodeIndex} is out of bounds, node-total: ${nodeTotal}`
+    );
   }
 };
 

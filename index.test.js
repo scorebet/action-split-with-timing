@@ -1,6 +1,29 @@
 const split = require("./splitter").split;
 const splitWithTiming = require("./splitter").splitWithTiming;
 
+// Validaton
+
+test("invalid test for invalid node-index", async () => {
+  expect(() => {
+    split("./data/test-missing", -1, 1);
+  }).toThrow(Error);
+});
+
+test("invalid test for node-index out-of-bounds", async () => {
+  expect(() => {
+    split("./data/test-missing", 3, 3);
+  }).toThrow(Error);
+});
+
+test("invalid test for invalid node-total", async () => {
+  expect(() => {
+    split("./data/test-missing", 0, 0);
+  }).toThrow(Error);
+  expect(() => {
+    split("./data/test-missing", 0, -1);
+  }).toThrow(Error);
+});
+
 // Split
 
 test("valid tests for a single test", async () => {
@@ -33,21 +56,6 @@ test("invalid test for missing directory", async () => {
   expect(tests).toEqual("");
 });
 
-test("invalid test for invalid node-index", async () => {
-  expect(() => {
-    split("./data/test-missing", -1, 1);
-  }).toThrow(Error);
-});
-
-test("invalid test for invalid node-total", async () => {
-  expect(() => {
-    split("./data/test-missing", 0, 0);
-  }).toThrow(Error);
-  expect(() => {
-    split("./data/test-missing", 0, -1);
-  }).toThrow(Error);
-});
-
 // Split with Timings
 
 test("valid tests with timings for a single test", async () => {
@@ -59,6 +67,18 @@ test("valid tests with timings for a single test", async () => {
   );
   expect(tests).toEqual(
     "--tests bet.thescore.android.ui.promotions.Hello1Test"
+  );
+});
+
+test("valid tests with timings for a last single test", async () => {
+  var tests = await splitWithTiming(
+    "./data/test-1",
+    "./data/test-result/test-app-result/",
+    2,
+    3
+  );
+  expect(tests).toEqual(
+    "--tests bet.thescore.android.ui.adapters.viewholders.Hello3Test"
   );
 });
 
