@@ -8,6 +8,7 @@ module.exports =
 const core = __nccwpck_require__(5127);
 const split = __nccwpck_require__(1793).split;
 const splitWithTiming = __nccwpck_require__(1793).splitWithTiming;
+const buildTestPattern = __nccwpck_require__(1793).buildTestPattern;
 const path = __nccwpck_require__(5622);
 const glob = __nccwpck_require__(7545);
 
@@ -25,7 +26,7 @@ async function run() {
     );
 
     var tests = "";
-    if (glob.sync(`${testPath}/**/*Test.*`).length === 0) {
+    if (glob.sync(buildTestPattern(testPath)).length === 0) {
       core.setFailed(`ERROR: Test path does not exist: ${testPath}`);
       return;
     }
@@ -12428,7 +12429,7 @@ let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
   verify(testPath, nodeIndex, nodeTotal);
   return new Promise((resolve) => {
     glob(
-      `${testPath}/**/*Test.*`,
+      buildTestPattern(testPath),
       { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
       function (er, files) {
         if (er != null) {
@@ -12492,7 +12493,7 @@ let splitWithTiming = async function (
   verify(testPath, nodeIndex, nodeTotal, filesToExlude);
   return new Promise((resolve) => {
     glob(
-      `${testPath}/**/*Test.*`,
+      buildTestPattern(testPath),
       { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
       function (testFilesError, testFiles) {
         if (testFilesError != null) {
@@ -12588,6 +12589,10 @@ let splitWithTiming = async function (
   });
 };
 
+let buildTestPattern = function (testPath) {
+    return `${testPath}/**/*Test.+(kt|java)`;
+};
+
 let verify = function (directoryPath, nodeIndex, nodeTotal) {
   if (directoryPath === "") {
     throw new Error("Error: Require module");
@@ -12608,6 +12613,7 @@ let verify = function (directoryPath, nodeIndex, nodeTotal) {
 module.exports = {
   split: split,
   splitWithTiming: splitWithTiming,
+  buildTestPattern: buildTestPattern,
 };
 
 
