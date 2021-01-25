@@ -10,7 +10,7 @@ let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
   verify(testPath, nodeIndex, nodeTotal);
   return new Promise((resolve) => {
     glob(
-      `${testPath}/**/*Test.kt`,
+      `${testPath}/**/*Test.*`,
       { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
       function (er, files) {
         if (er != null) {
@@ -74,7 +74,7 @@ let splitWithTiming = async function (
   verify(testPath, nodeIndex, nodeTotal, filesToExlude);
   return new Promise((resolve) => {
     glob(
-      `${testPath}/**/*Test.kt`,
+      `${testPath}/**/*Test.*`,
       { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
       function (testFilesError, testFiles) {
         if (testFilesError != null) {

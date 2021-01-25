@@ -18,7 +18,7 @@ async function run() {
     );
 
     var tests = "";
-    if (glob.sync(`${testPath}/**/*Test.kt`).length === 0) {
+    if (glob.sync(`${testPath}/**/*Test.*`).length === 0) {
       core.setFailed(`ERROR: Test path does not exist: ${testPath}`);
       return;
     }
