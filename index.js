@@ -1,6 +1,7 @@
 const core = require("@actions/core");
 const split = require("./splitter").split;
 const splitWithTiming = require("./splitter").splitWithTiming;
+const buildTestPattern = require("./splitter").buildTestPattern;
 const path = require("path");
 const glob = require("glob");
 
@@ -18,7 +19,7 @@ async function run() {
     );
 
     var tests = "";
-    if (glob.sync(`${testPath}/**/*Test.kt`).length === 0) {
+    if (glob.sync(buildTestPattern(testPath)).length === 0) {
       core.setFailed(`ERROR: Test path does not exist: ${testPath}`);
       return;
     }

@@ -38,6 +38,13 @@ test("valid tests for a multiple test", async () => {
   );
 });
 
+test("valid tests for a mix of kotlin & java tests", async () => {
+  var tests = await split("./data/test-3", 0, 1);
+  expect(tests).toEqual(
+    "--tests Hello1Test --tests Hello2Test"
+  );
+});
+
 test("valid tests for a multiple test with single ignore file", async () => {
   var tests = await split("./data/test-1", 0, 1, ["Hello3Test.kt"]);
   expect(tests).toEqual("--tests Hello1Test --tests Hello2Test");

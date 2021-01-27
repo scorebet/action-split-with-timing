@@ -10,7 +10,7 @@ let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
   verify(testPath, nodeIndex, nodeTotal);
   return new Promise((resolve) => {
     glob(
-      `${testPath}/**/*Test.kt`,
+      buildTestPattern(testPath),
       { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
       function (er, files) {
         if (er != null) {
@@ -74,7 +74,7 @@ let splitWithTiming = async function (
   verify(testPath, nodeIndex, nodeTotal, filesToExlude);
   return new Promise((resolve) => {
     glob(
-      `${testPath}/**/*Test.kt`,
+      buildTestPattern(testPath),
       { ignore: filesToExlude.map((value) => `${testPath}/**/${value}`) },
       function (testFilesError, testFiles) {
         if (testFilesError != null) {
@@ -170,6 +170,10 @@ let splitWithTiming = async function (
   });
 };
 
+let buildTestPattern = function (testPath) {
+    return `${testPath}/**/*Test.+(kt|java)`;
+};
+
 let verify = function (directoryPath, nodeIndex, nodeTotal) {
   if (directoryPath === "") {
     throw new Error("Error: Require module");
@@ -190,4 +194,5 @@ let verify = function (directoryPath, nodeIndex, nodeTotal) {
 module.exports = {
   split: split,
   splitWithTiming: splitWithTiming,
+  buildTestPattern: buildTestPattern
 };
