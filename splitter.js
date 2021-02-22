@@ -115,6 +115,7 @@ let splitWithTiming = async function (
                 deque.add({ name: testResultName, time: testResultTime });
               }
               let testChunkMaxTime = testResultTotalTime / nodeTotal;
+              let testChunkMaxTimeThreshold = testChunkMaxTime * 1.20
               deque = deque.sorted((a, b) => {
                 return a.time - b.time;
               });
@@ -139,12 +140,7 @@ let splitWithTiming = async function (
                   isPollLast = false;
                   if (deque.length !== 0 && i === nodeTotal - 1) {
                     continue;
-                  } else if (
-                    deque.length !== 0 &&
-                    testChunkCurrentTime + deque.peek().time >
-                      testChunkMaxTime &&
-                    i < nodeTotal - nodeTotal / 4
-                  ) {
+                  } else if (deque.length !== 0 && testChunkCurrentTime + deque.peek().time > testChunkMaxTimeThreshold) {
                     break;
                   }
                 }
