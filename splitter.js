@@ -115,7 +115,7 @@ let splitWithTiming = async function (
                 deque.add({ name: testResultName, time: testResultTime });
               }
               let testChunkMaxTime = testResultTotalTime / nodeTotal;
-              let testChunkMaxTimeThreshold = testChunkMaxTime * 1.05
+              let testChunkMaxTimeThreshold = testChunkMaxTime * 1.10
               deque = deque.sorted((a, b) => {
                 return a.time - b.time;
               });
