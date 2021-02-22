@@ -129,6 +129,11 @@ let splitWithTiming = async function (
                     i === nodeTotal - 1)
                 ) {
                   let result = isPollLast ? deque.pop() : deque.shift();
+                  if (result.time > testChunkMaxTime) {
+                    core.info(
+                      `WARNING: Current chunk ${result.name}(${result.time}s) is greater than the total chunk ${testChunkMaxTime}s, consider increasing total-node`
+                    );
+                  }
                   testNames.push(result.name);
                   testChunkCurrentTime += result.time;
                   isPollLast = false;
