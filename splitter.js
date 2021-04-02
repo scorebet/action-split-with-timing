@@ -1,4 +1,5 @@
-var fs = require("fs").promises;
+var fsPromise = require("fs").promises;
+var fs = require("fs");
 var convert = require("xml-js");
 var glob = require("glob");
 var path = require("path");
@@ -33,27 +34,52 @@ let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
   let missingTests = [];
   let testResultFilesMap = new Map();
   testResultFiles.forEach((testResultFile) => {
-    let fileName = path.parse(testResultFile).name.split(".").pop();
+    let xml = JSON.parse(convert.xml2json(fs.readFileSync(testResultFile)));
+    let fileNameData = xml.elements[0].attributes.name.split(".");
+    let fileName = fileNameData.pop();
+    let packageName = fileNameData.join(".");
     if (!testResultFilesMap.has(fileName)) {
-      testResultFilesMap.add(1, fileName);
+      testResultFilesMap.add([packageName], fileName);
     } else {
-      testResultFilesMap.add(testResultFilesMap.get(fileName) + 1, fileName);
+      testResultFilesMap.add(
+        testResultFilesMap.get(fileName).push(packageName),
+        fileName
+      );
     }
   });
   testFiles.forEach((testFile) => {
+    let fileData = fs.readFileSync(testFile, "UTF-8");
+    let regex = /^(\s+)?package(\s+)?([a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_])/;
     let fileName = path.parse(testFile).name;
+    let packageName = fileData.match(regex)[3];
     if (testResultFilesMap.has(fileName)) {
-      testResultFilesMap.add(testResultFilesMap.get(fileName) - 1, fileName);
-      if (testResultFilesMap.get(fileName) <= 0) {
+      let testResultFilePackages = testResultFilesMap.get(fileName);
+      if (testResultFilePackages.includes(packageName)) {
+        testResultFilesMap.add(
+          testResultFilePackages.filter((item) => item !== packageName),
+          fileName
+        );
+      } else {
+        missingTests.push({
+          name: fileName,
+          package: packageName,
+        });
+      }
+      if (testResultFilesMap.get(fileName).length <= 0) {
         testResultFilesMap.delete(fileName);
       }
     } else {
-      missingTests.push(fileName);
+      missingTests.push({
+        name: fileName,
+        package: packageName,
+      });
     }
   });
   if (missingTests.length != 0) {
     core.info(
-      `WARNING: Test[${testFiles.length}] and TestResult[${testResultFiles.length}] are not in sync, unsync tests: ${missingTests}`
+      `WARNING: Test[${testFiles.length}] and TestResult[${
+        testResultFiles.length
+      }] are not in sync, unsync tests: ${JSON.stringify(missingTests)}`
     );
     return false;
   } else {
@@ -105,7 +131,7 @@ let splitWithTiming = async function (
               var i = 0;
               for (i = 0; i < testResultFiles.length; i++) {
                 let xml = JSON.parse(
-                  convert.xml2json(await fs.readFile(testResultFiles[i]))
+                  convert.xml2json(await fsPromise.readFile(testResultFiles[i]))
                 );
                 let testResultName = xml.elements[0].attributes.name;
                 let testResultTime = parseFloat(
@@ -171,7 +197,7 @@ let splitWithTiming = async function (
 };
 
 let buildTestPattern = function (testPath) {
-    return `${testPath}/**/*Test.+(kt|java)`;
+  return `${testPath}/**/*Test.+(kt|java)`;
 };
 
 let verify = function (directoryPath, nodeIndex, nodeTotal) {
@@ -194,5 +220,5 @@ let verify = function (directoryPath, nodeIndex, nodeTotal) {
 module.exports = {
   split: split,
   splitWithTiming: splitWithTiming,
-  buildTestPattern: buildTestPattern
+  buildTestPattern: buildTestPattern,
 };
