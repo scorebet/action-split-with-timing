@@ -41,11 +41,11 @@ let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
     if (!testResultFilesMap.has(fileName)) {
       testResultFilesMap.add([packageName], fileName);
     } else {
-      testResultFilesMap.add(
-        testResultFilesMap.get(fileName).push(packageName),
-        fileName
-      );
+      let testResultFilePackages = testResultFilesMap.get(fileName);
+      testResultFilePackages.push(packageName);
+      testResultFilesMap.add(testResultFilePackages, fileName);
     }
+    testResultFilesMap.get(fileName);
   });
   testFiles.forEach((testFile) => {
     let fileData = fs.readFileSync(testFile, "UTF-8");

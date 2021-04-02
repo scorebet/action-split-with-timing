@@ -116,3 +116,25 @@ test("invalid tests with timings not in sync for a multiple test", async () => {
     "--tests Hello1Test --tests Hello2Test --tests Hello3Test"
   );
 });
+
+test("invalid tests with timings not in sync for a multiple subdirectory tests", async () => {
+  var tests = await splitWithTiming(
+    "./data/test-3",
+    "./data/test-result/test-app3-result/",
+    0,
+    1
+  );
+  expect(tests).toEqual("--tests Hello1Test --tests Hello2Test");
+});
+
+test("valid tests with timings for a multiple subdirectory tests", async () => {
+  var tests = await splitWithTiming(
+    "./data/test-4",
+    "./data/test-result/test-app3-result/",
+    0,
+    1
+  );
+  expect(tests).toEqual(
+    "--tests com.sample.sub2.test.Hello1Test --tests com.sample.sub1.test.Hello1Test"
+  );
+});
