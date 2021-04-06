@@ -45,7 +45,6 @@ let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
       testResultFilePackages.push(packageName);
       testResultFilesMap.add(testResultFilePackages, fileName);
     }
-    testResultFilesMap.get(fileName);
   });
   testFiles.forEach((testFile) => {
     let fileData = fs.readFileSync(testFile, "UTF-8");
