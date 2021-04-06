@@ -40,9 +40,7 @@ test("valid tests for a multiple test", async () => {
 
 test("valid tests for a mix of kotlin & java tests", async () => {
   var tests = await split("./data/test-3", 0, 1);
-  expect(tests).toEqual(
-    "--tests Hello1Test --tests Hello2Test"
-  );
+  expect(tests).toEqual("--tests Hello1Test --tests Hello2Test");
 });
 
 test("valid tests for a multiple test with single ignore file", async () => {
@@ -72,9 +70,7 @@ test("valid tests with timings for a single test", async () => {
     1,
     3
   );
-  expect(tests).toEqual(
-    "--tests bet.thescore.android.ui.promotions.Hello1Test"
-  );
+  expect(tests).toEqual("--tests com.sample.test.Hello1Test");
 });
 
 test("valid tests with timings for a last single test", async () => {
@@ -84,9 +80,7 @@ test("valid tests with timings for a last single test", async () => {
     2,
     3
   );
-  expect(tests).toEqual(
-    "--tests bet.thescore.android.ui.adapters.viewholders.Hello3Test"
-  );
+  expect(tests).toEqual("--tests com.sample.test.Hello3Test");
 });
 
 test("valid tests with timings for a multiple test", async () => {
@@ -97,7 +91,7 @@ test("valid tests with timings for a multiple test", async () => {
     1
   );
   expect(tests).toEqual(
-    "--tests bet.thescore.android.ui.adapters.viewholders.Hello2Test --tests bet.thescore.android.ui.adapters.viewholders.Hello3Test --tests bet.thescore.android.ui.promotions.Hello1Test"
+    "--tests com.sample.test.Hello2Test --tests com.sample.test.Hello3Test --tests com.sample.test.Hello1Test"
   );
 });
 
@@ -120,5 +114,27 @@ test("invalid tests with timings not in sync for a multiple test", async () => {
   );
   expect(tests).toEqual(
     "--tests Hello1Test --tests Hello2Test --tests Hello3Test"
+  );
+});
+
+test("invalid tests with timings not in sync for a multiple subdirectory tests", async () => {
+  var tests = await splitWithTiming(
+    "./data/test-3",
+    "./data/test-result/test-app3-result/",
+    0,
+    1
+  );
+  expect(tests).toEqual("--tests Hello1Test --tests Hello2Test");
+});
+
+test("valid tests with timings for a multiple subdirectory tests", async () => {
+  var tests = await splitWithTiming(
+    "./data/test-4",
+    "./data/test-result/test-app3-result/",
+    0,
+    1
+  );
+  expect(tests).toEqual(
+    "--tests com.sample.sub2.test.Hello1Test --tests com.sample.sub1.test.Hello1Test"
   );
 });
