@@ -31,7 +31,7 @@
     "xml-js": "^1.6.11"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.25.1",
+    "@vercel/ncc": "^0.28.2",
     "eslint": "^7.18.0",
     "jest": "^26.1.0"
   }
