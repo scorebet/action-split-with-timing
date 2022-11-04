@@ -12470,7 +12470,9 @@ let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
     let fileData = fs.readFileSync(testFile, "UTF-8");
     let regex = /^(\s+)?package(\s+)?([a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_])/;
     let fileName = path.parse(testFile).name;
-    let packageName = fileData.match(regex)[3];
+    let packageNameMatches = fileData.match(regex);
+    core.info(`-=-= packageNameMatches: ${packageNameMatches}`);
+    let packageName = packageNameMatches[3];
     if (testResultFilesMap.has(fileName)) {
       let testResultFilePackages = testResultFilesMap.get(fileName);
       if (testResultFilePackages.includes(packageName)) {
