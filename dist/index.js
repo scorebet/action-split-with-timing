@@ -12471,7 +12471,7 @@ let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
     let regex = /^(\s+)?package(\s+)?([a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_])/;
     let fileName = path.parse(testFile).name;
     let packageNameMatches = fileData.match(regex);
-    core.info(`-=-= packageNameMatches: ${packageNameMatches}`);
+    core.info(`-=-= fileName: ${fileName},  packageNameMatches: ${packageNameMatches}`);
     let packageName = packageNameMatches[3];
     if (testResultFilesMap.has(fileName)) {
       let testResultFilePackages = testResultFilesMap.get(fileName);
