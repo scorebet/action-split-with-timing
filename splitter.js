@@ -47,6 +47,7 @@ let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
     }
   });
   testFiles.forEach((testFile) => {
+    core.info(`-=-= test file: ${testFile}`);
     let fileData = fs.readFileSync(testFile, "UTF-8");
     let regex = /^(\s+)?package(\s+)?([a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_])/;
     let fileName = path.parse(testFile).name;
