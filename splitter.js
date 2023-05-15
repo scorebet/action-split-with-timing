@@ -31,6 +31,13 @@ let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
 };
 
 let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
+  if(testFiles == null && testResultFiles == null) {
+    return true
+  }
+  else if(testFiles == null || testResultFiles == null) {
+    return false
+  }
+
   let missingTests = [];
   let testResultFilesMap = new Map();
   testResultFiles.forEach((testResultFile) => {
