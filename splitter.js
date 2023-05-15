@@ -31,10 +31,10 @@ let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
 };
 
 let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
-  if(testFiles == null && testResultFiles == null) {
-    return true
-  }
-  else if(testFiles == null || testResultFiles == null) {
+  if(testFiles == null || testResultFiles == null) {
+    core.info(
+      `couldnt find test files or test results`
+    );
     return false
   }
 
