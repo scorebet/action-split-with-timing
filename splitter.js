@@ -31,6 +31,10 @@ let split = function (testPath, nodeIndex, nodeTotal, filesToExlude = []) {
 };
 
 let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
+    core.info(
+      `test files: ${testFiles} ---- test results: ${testResultFiles}`
+    );
+  
   if(testFiles == null || testResultFiles == null) {
     core.info(
       `couldnt find test files or test results`
@@ -57,7 +61,11 @@ let isTestFilesOnSyncWithTestResults = function (testFiles, testResultFiles) {
     let fileData = fs.readFileSync(testFile, "UTF-8");
     let regex = /^(\s+)?package(\s+)?([a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_])/;
     let fileName = path.parse(testFile).name;
-    let packageName = fileData.match(regex)[3];
+    let matchedPackageNames = fileData.match(regex)
+    core.info(
+      `matched package names: ${matchedPackageNames}`
+    );
+    let packageName = matchedPackageNames[3];
     if (testResultFilesMap.has(fileName)) {
       let testResultFilePackages = testResultFilesMap.get(fileName);
       if (testResultFilePackages.includes(packageName)) {
