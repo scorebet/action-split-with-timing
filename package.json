@@ -27,7 +27,7 @@
   "dependencies": {
     "@actions/core": "^1.10.0",
     "collections": "^5.1.12",
-    "glob": "^7.1.6",
+    "glob": "^10.3.10",
     "xml-js": "^1.6.11"
   },
   "devDependencies": {
